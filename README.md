@@ -70,13 +70,14 @@ See [MAINTAINING.md](MAINTAINING.md) for the full maintenance workflow and
 
 ## Deploy to GitHub Pages
 
-```bash
-npm run build
-```
+Deployment is automated via `.github/workflows/deploy.yml`. Every push to `main`
+builds the site and publishes it to GitHub Pages automatically.
 
-Publish the contents of `dist/` to GitHub Pages (for example with a Pages action
-that uploads `dist/`, or by pushing `dist/` to a `gh-pages` branch). Because asset
-paths are relative, it works at the repository subpath without extra config.
+**First-time setup:** in the GitHub repo go to Settings > Pages and set the source
+to **GitHub Actions** (not "Deploy from a branch").
+
+Because asset paths are relative (`base: "./"` in `vite.config.ts`), the site works
+at the repository subpath (`https://<user>.github.io/<repo>/`) without extra config.
 
 ## Project layout
 

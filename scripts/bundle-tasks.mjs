@@ -49,7 +49,8 @@ function walk(absDir, baseForKeys, acc) {
       const ext = entry.slice(entry.lastIndexOf("."));
       if (!ALLOWED_EXT.has(ext)) continue;
       if (isExcludedPath(rel)) continue;
-      acc[rel] = readFileSync(abs, "utf8");
+      const raw = readFileSync(abs, "utf8");
+      acc[rel] = ext === ".sh" ? raw.replace(/\r\n/g, "\n") : raw;
     }
   }
 }

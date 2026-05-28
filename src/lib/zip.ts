@@ -112,7 +112,7 @@ export function projectFileMap(spec: ProjectSpec): Record<string, string> {
 export async function buildProjectZip(spec: ProjectSpec): Promise<{ blob: Blob; filename: string }> {
   const zip = new JSZip();
   for (const [path, content] of Object.entries(projectFileMap(spec))) {
-    zip.file(path, content);
+    zip.file(path, path.endsWith(".sh") ? content.replace(/\r\n/g, "\n") : content);
   }
   const proj = toSnakeCase(spec.projectName) || "my_calt_project";
   const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });

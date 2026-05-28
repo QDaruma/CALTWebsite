@@ -55,7 +55,7 @@ The ready-made task files are a snapshot baked into `src/generated/projectFiles.
 To refresh them from the framework repo:
 
 ```bash
-npm run sync:tasks   # clones QDaruma/CALTCode, re-bundles the snapshot
+npm run sync:tasks   # clones HiroshiKERA/calt-codebase, re-bundles the snapshot
 ```
 
 Then review the diff in `src/generated/projectFiles.ts`, rebuild, and commit. To

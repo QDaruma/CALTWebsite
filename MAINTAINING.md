@@ -12,7 +12,7 @@ from two independent sources, and they go out of date in different ways.
 
 2. **The task files** (generators, configs, `shared/`, scripts) are a frozen
    snapshot captured into `src/generated/projectFiles.ts`. They come from the
-   framework repo `https://github.com/QDaruma/CALTCode` and only change when you
+   framework repo `https://github.com/HiroshiKERA/calt-codebase` and only change when you
    re-bundle.
 
 3. **The site-owned packaging** (`requirements.txt`, `pyproject.toml`, `install.sh`,
@@ -28,7 +28,7 @@ the pinned engine version, so you can tell which snapshot a user received.
 npm run sync:tasks
 ```
 
-This clones `QDaruma/CALTCode`, re-bundles `src/generated/projectFiles.ts`, and cleans
+This clones `HiroshiKERA/calt-codebase`, re-bundles `src/generated/projectFiles.ts`, and cleans
 up. Then review the diff, rebuild (`npm run build`), and commit.
 
 - Source a different repo: `CALT_REPO_URL=<url> npm run sync:tasks`.

@@ -23,7 +23,7 @@ Prism (code highlighting).
 What a user downloads is assembled from two distinct sources:
 
 1. **Framework content** lives in the separate repo
-   `https://github.com/QDaruma/CALTCode`: the task folders (`parity/`,
+   `https://github.com/HiroshiKERA/calt-codebase`: the task folders (`parity/`,
    `groebner_basis/`, `border_basis/`) and the shared library (`shared/`). This app
    does not contain that code as source. It embeds a **snapshot** of it.
 

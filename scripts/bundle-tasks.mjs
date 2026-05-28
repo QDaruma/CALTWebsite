@@ -6,7 +6,7 @@
 //        - the first CLI argument:   node scripts/bundle-tasks.mjs /path/to/CALTCode
 //        - the CALT_REPO env var
 //        - ../.. (the monorepo layout, when the framework sits next to site/)
-//      `npm run sync:tasks` clones https://github.com/QDaruma/CALTCode and calls
+//      `npm run sync:tasks` clones https://github.com/HiroshiKERA/calt-codebase and calls
 //      this with that path, so the site repo needs nothing checked out alongside.
 //   2. The site's own project-files/ (requirements.txt, pyproject.toml, the
 //      install scripts). These are packaging files the site owns, not the

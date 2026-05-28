@@ -14,7 +14,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const repoUrl = process.env.CALT_REPO_URL || "https://github.com/QDaruma/CALTCode";
+const repoUrl = process.env.CALT_REPO_URL || "https://github.com/HiroshiKERA/calt-codebase";
 
 const tmp = mkdtempSync(join(tmpdir(), "caltcode-"));
 try {

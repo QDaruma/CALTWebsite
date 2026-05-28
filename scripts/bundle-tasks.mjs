@@ -1,0 +1,138 @@
+// Snapshots the CALT framework's task folders + shared code into a single TS
+// module the site embeds, so the browser can assemble a downloadable ZIP.
+//
+// Two sources are combined:
+//   1. The CALT framework repo (tasks + shared/). Resolved from, in order:
+//        - the first CLI argument:   node scripts/bundle-tasks.mjs /path/to/CALTCode
+//        - the CALT_REPO env var
+//        - ../.. (the monorepo layout, when the framework sits next to site/)
+//      `npm run sync:tasks` clones https://github.com/QDaruma/CALTCode and calls
+//      this with that path, so the site repo needs nothing checked out alongside.
+//   2. The site's own project-files/ (requirements.txt, pyproject.toml, the
+//      install scripts). These are packaging files the site owns, not the
+//      framework, so the calt-x pin lives here.
+//
+// A "task" is any top-level framework folder that contains core/generator.py.
+// Run from the site/ directory:  node scripts/bundle-tasks.mjs [framework-path]
+// Pure Node (no bundler) so it runs on any platform without native deps.
+
+import { readdirSync, readFileSync, statSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+const siteRoot = resolve(scriptDir, "..");
+const frameworkRoot = resolve(process.argv[2] || process.env.CALT_REPO || resolve(siteRoot, ".."));
+const projectFilesDir = resolve(siteRoot, "project-files");
+const outFile = resolve(siteRoot, "src", "generated", "projectFiles.ts");
+
+const ALLOWED_EXT = new Set([".py", ".yaml", ".yml", ".sh", ".md", ".toml"]);
+const SKIP_DIRS = new Set(["site", "docs", ".git", "node_modules", "templates", "__pycache__", ".claude"]);
+
+// Exclude generated datasets / training outputs (they can be huge and are rebuilt).
+function isExcludedPath(relPath) {
+  const parts = relPath.split("/");
+  if (parts.some((p) => p === "outputs" || /^data($|_)/.test(p) || p === "data")) return true;
+  if (/_raw\.txt$/.test(relPath) || /_stats\.yaml$/.test(relPath)) return true;
+  return false;
+}
+
+function walk(absDir, baseForKeys, acc) {
+  for (const entry of readdirSync(absDir)) {
+    const abs = join(absDir, entry);
+    const st = statSync(abs);
+    if (st.isDirectory()) {
+      if (entry === "__pycache__" || entry === "outputs" || /^data($|_)/.test(entry)) continue;
+      walk(abs, baseForKeys, acc);
+    } else {
+      const rel = relative(baseForKeys, abs).split(sep).join("/");
+      const ext = entry.slice(entry.lastIndexOf("."));
+      if (!ALLOWED_EXT.has(ext)) continue;
+      if (isExcludedPath(rel)) continue;
+      acc[rel] = readFileSync(abs, "utf8");
+    }
+  }
+}
+
+if (!existsSync(frameworkRoot)) {
+  console.error(`Framework repo not found at: ${frameworkRoot}`);
+  console.error(`Pass a path or run "npm run sync:tasks" to fetch it from GitHub.`);
+  process.exit(1);
+}
+
+// ---- Discover task folders in the framework repo ----
+const taskNames = [];
+for (const entry of readdirSync(frameworkRoot)) {
+  if (SKIP_DIRS.has(entry)) continue;
+  const abs = join(frameworkRoot, entry);
+  if (!statSync(abs).isDirectory()) continue;
+  if (existsSync(join(abs, "core", "generator.py"))) taskNames.push(entry);
+}
+taskNames.sort();
+
+const taskFiles = {};
+for (const name of taskNames) {
+  const acc = {};
+  walk(join(frameworkRoot, name), frameworkRoot, acc);
+  taskFiles[name] = acc;
+}
+
+// ---- Common project files ----
+const common = {};
+// shared/ comes from the framework repo.
+if (existsSync(join(frameworkRoot, "shared"))) walk(join(frameworkRoot, "shared"), frameworkRoot, common);
+// Packaging files are owned by the site (project-files/), falling back to the
+// framework repo if a file is not overridden there. A README.md is generated at
+// download time, so it is not bundled here.
+for (const f of ["pyproject.toml", "requirements.txt", "install.sh", "install.ps1"]) {
+  const local = join(projectFilesDir, f);
+  const upstream = join(frameworkRoot, f);
+  if (existsSync(local)) common[f] = readFileSync(local, "utf8");
+  else if (existsSync(upstream)) common[f] = readFileSync(upstream, "utf8");
+}
+
+// ---- Snapshot stamp: records when this bundle was taken and the engine pin ----
+const caltLine =
+  (common["requirements.txt"] || "")
+    .split("\n")
+    .find((l) => /^\s*calt-x\b/.test(l))
+    ?.trim() || "calt-x (unpinned)";
+const bundledOn = new Date().toISOString().slice(0, 10);
+common["CALT_SNAPSHOT.txt"] =
+  `CALT project snapshot\n` +
+  `=====================\n` +
+  `Bundled on : ${bundledOn}\n` +
+  `Engine     : ${caltLine}\n` +
+  `\n` +
+  `These task files were captured by the CALT Task Builder on the date above.\n` +
+  `If a task stops working after a calt-x release, check that the installed\n` +
+  `calt-x matches the engine version listed here.\n`;
+
+// ---- Emit TS ----
+mkdirSync(dirname(outFile), { recursive: true });
+const header = `// AUTO-GENERATED by scripts/bundle-tasks.mjs. Do not edit by hand.
+// Run \`npm run sync:tasks\` (fetches CALTCode) or \`node scripts/bundle-tasks.mjs <path>\` to refresh.
+/* eslint-disable */
+
+export const BUNDLED_TASKS: string[] = ${JSON.stringify(taskNames)};
+
+export const TASK_FILES: Record<string, Record<string, string>> = ${JSON.stringify(taskFiles)};
+
+export const COMMON_FILES: Record<string, string> = ${JSON.stringify(common)};
+`;
+writeFileSync(outFile, header, "utf8");
+
+// ---- Report ----
+console.log(`Framework: ${frameworkRoot}`);
+let totalBytes = 0;
+for (const name of taskNames) {
+  const files = taskFiles[name];
+  const n = Object.keys(files).length;
+  const bytes = Object.values(files).reduce((s, c) => s + c.length, 0);
+  totalBytes += bytes;
+  console.log(`  ${name.padEnd(22)} ${String(n).padStart(3)} files  ${(bytes / 1024).toFixed(1)} KB`);
+}
+const commonBytes = Object.values(common).reduce((s, c) => s + c.length, 0);
+totalBytes += commonBytes;
+console.log(`  ${"(common)".padEnd(22)} ${String(Object.keys(common).length).padStart(3)} files  ${(commonBytes / 1024).toFixed(1)} KB`);
+console.log(`\nBundled ${taskNames.length} tasks -> ${relative(siteRoot, outFile).split(sep).join("/")}  (${(totalBytes / 1024).toFixed(1)} KB total)`);

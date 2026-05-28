@@ -1,0 +1,14 @@
+# Python dependencies for running a downloaded CALT project.
+# Install everything in one step with:
+#   bash install.sh        (Linux / macOS / WSL)
+#   ./install.ps1          (Windows PowerShell)
+# calt-x is pinned to the version the bundled task files were tested against.
+# To upgrade: bump this line, then re-bundle the site (npm run sync:tasks), and test a task.
+calt-x==1.1.0
+omegaconf
+matplotlib
+click
+sympy
+# wandb is pulled in by calt-x; the builder un-comments this only as a reminder
+# when a task turns progress logging on. You still need a free account + "wandb login".
+# wandb

@@ -28,17 +28,26 @@ function LangSwitch() {
 }
 
 export function TopBar() {
-  const { step, reset } = useWizard();
+  const { step, reset, setStep } = useWizard();
   const { theme, toggle } = useTheme();
   const { t } = useI18n();
+
+  // Clicking the logo returns home without discarding work; "Start over" wipes
+  // everything (with a confirmation) so the two actions are clearly distinct.
+  const goHome = () => step > 0 && setStep(0);
+  const confirmReset = () => {
+    if (window.confirm(t.nav.confirmReset)) reset();
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-ink-200/60 glass">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
-        <button onClick={() => step > 0 && reset()} className="group flex items-center gap-2.5 outline-none">
+        <button onClick={goHome} className="group flex items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand-400/60">
           <img
             src={logoUrl}
             alt="CALT"
+            width={44}
+            height={44}
             className="h-11 w-11 flex-shrink-0 rounded-full object-contain"
           />
           <span className="flex flex-col items-start leading-none">
@@ -52,7 +61,7 @@ export function TopBar() {
         <div className="flex items-center gap-2">
           {step > 0 && (
             <Tooltip content={t.nav.startOver}>
-              <Button variant="ghost" size="sm" onClick={reset} aria-label={t.nav.startOver}>
+              <Button variant="ghost" size="sm" onClick={confirmReset} aria-label={t.nav.startOver}>
                 <RotateCcw size={15} /> <span className="hidden md:inline">{t.nav.startOver}</span>
               </Button>
             </Tooltip>

@@ -27,13 +27,15 @@ What a user downloads is assembled from two distinct sources:
    `groebner_basis/`, `border_basis/`) and the shared library (`shared/`). This app
    does not contain that code as source. It embeds a **snapshot** of it.
 
-2. **Site-owned packaging** lives here in `project-files/`:
-   `requirements.txt`, `pyproject.toml`, `install.sh`, `install.ps1`. These wrap the
-   framework into a runnable project and carry the pinned `calt-x` version.
+2. **Site-owned packaging** lives here in `project-files/`: `pyproject.toml`. It
+   wraps the framework into a runnable project and carries the pinned `calt-x`
+   version. There are no install scripts — installation is conda-based and
+   documented in the generated README.
 
-3. **The engine `calt-x`** is in neither: it is installed from PyPI when the user
-   runs the install script. It is pinned (see `project-files/requirements.txt`) so a
-   future release cannot silently break the snapshot.
+3. **The engine `calt-x`** is in neither: the user installs it with conda (a
+   `calt-env` environment with SageMath from conda-forge, then `pip install
+   calt-x`). It is pinned (see `project-files/pyproject.toml`) so a future release
+   cannot silently break the snapshot.
 
 The snapshot of (1) + (2) is baked into `src/generated/projectFiles.ts` by a build
 script. That generated file is what the browser actually ships.
@@ -112,9 +114,9 @@ produces a `path -> content` map:
 - For each selected ready-made task, it copies `TASK_FILES[id]` from the snapshot,
   running each file through `applySettings(path, content, effectiveSettings)`.
 - For the custom task, it calls `buildFiles(customConfig)` from `codegen.ts`.
-- In `"project"` mode it also adds `COMMON_FILES` (shared/ + packaging + the snapshot
-  stamp), a freshly generated root `README.md`, and un-comments `wandb` in
-  `requirements.txt` if any task enabled logging (`enableWandb`).
+- In `"project"` mode it also adds `COMMON_FILES` (shared/ + `pyproject.toml` + the
+  snapshot stamp) and a freshly generated root `README.md`. (wandb needs no special
+  handling: it ships as a calt-x dependency, so the conda install already covers it.)
 
 `applySettings` only touches `experiments/toy/configs/`:
 - `data.yaml`: `num_train_samples`, `num_test_samples`.
@@ -176,8 +178,9 @@ semantic classes (`bg-surface`, `text-ink-900`, `ring-ink-200`) that flip automa
 bundler against it, and cleans up. Override the source with `CALT_REPO_URL`.
 
 To refresh ready-made tasks: `npm run sync:tasks`, review the diff, rebuild, commit.
-To upgrade the engine: bump `calt-x==X.Y.Z` in `project-files/requirements.txt` and
-`project-files/pyproject.toml`, re-run `sync:tasks`, test a task, then ship.
+To upgrade the engine: bump `calt-x==X.Y.Z` in `project-files/pyproject.toml` (and the
+install snippet in `src/lib/projectReadme.ts` + `src/components/steps/StepReview.tsx`),
+re-run `sync:tasks`, test a task, then ship.
 
 ## 11. How to extend
 

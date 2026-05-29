@@ -1,11 +1,16 @@
 // Generates the README.md placed at the root of a "full project" download.
 // Plain, beginner-friendly, English (it sits next to the code).
+//
+// Installation is conda-based: a single `calt-env` environment that bundles
+// SageMath (needed by the polynomial tasks) via conda-forge, with calt-x and the
+// small pip extras installed on top. This mirrors the environment the tasks were
+// tested in, so every task — including groebner_basis / border_basis — works.
 
 export interface ReadmeOpts {
   projectName: string;
   /** Folder names included in the project (real example tasks + custom). */
   taskFolders: string[];
-  /** Subset of taskFolders that require SageMath. */
+  /** Subset of taskFolders that require SageMath (informational only). */
   sageTasks: string[];
 }
 
@@ -15,9 +20,10 @@ export function buildProjectReadme(o: ReadmeOpts): string {
   const taskList = tasks.map((t) => `- \`${t}/\``).join("\n");
 
   const sageNote = o.sageTasks.length
-    ? `\n> Some tasks here use polynomials and also need **SageMath**, which the setup
-> script cannot install on its own. Follow the conda hint the script prints.
-> Tasks that need it: ${o.sageTasks.map((t) => `\`${t}\``).join(", ")}.\n`
+    ? `\n> Some tasks here compute their answers with **SageMath** (${o.sageTasks
+        .map((t) => `\`${t}\``)
+        .join(", ")}). The conda environment below already includes it, so there
+> is nothing extra to install.\n`
     : "";
 
   return `# ${o.projectName}
@@ -28,14 +34,36 @@ You run it with a few copy-paste commands. No need to write any code yourself.
 
 ## 1. Install (just once)
 
-Open a terminal in this folder and run the setup script for your system:
+Installation uses **conda** (Miniforge or Anaconda). This is the setup the tasks
+were tested with: one environment, called \`calt-env\`, that contains SageMath,
+PyTorch and the CALT engine together — so every task works, including the
+polynomial ones.
 
-- **Linux, macOS, or WSL:** \`bash install.sh\`
-- **Windows (PowerShell):** \`./install.ps1\`
+> Don't have conda yet? Install **Miniforge** first:
+> https://github.com/conda-forge/miniforge
 
-This creates a local environment (\`.venv\`) and installs everything from
-\`requirements.txt\`.
+Open a terminal in this folder and run, one line at a time:
+
+\`\`\`bash
+# 1. Create an environment with SageMath (this is the big download, ~once)
+conda create -n calt-env -c conda-forge sage python=3.12 -y
+
+# 2. Activate it
+conda activate calt-env
+
+# 3. Install the CALT engine and helpers
+pip install calt-x==1.1.0 omegaconf matplotlib click
+\`\`\`
+
+Check it worked:
+
+\`\`\`bash
+python -c "import calt, sage.all; print('CALT + SageMath OK')"
+\`\`\`
 ${sageNote}
+> **Every time** you open a new terminal to use this project, first run:
+> \`conda activate calt-env\`
+
 ## 2. Run a task
 
 This project includes:
@@ -45,11 +73,15 @@ ${taskList}
 Each task runs in three steps. From the task's \`scripts\` folder:
 
 \`\`\`bash
+conda activate calt-env
 cd ${first}/experiments/toy/scripts
 python generate.py    # 1. create the training examples
 python train.py       # 2. train the model (add --dryrun for a quick test)
 python evaluate.py    # 3. see how often it gets the answer right
 \`\`\`
+
+Start with \`python train.py --dryrun\`: it trains for just a moment so you can
+confirm the whole pipeline works end to end before launching a real run.
 
 ## What is inside
 

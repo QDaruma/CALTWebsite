@@ -1,4 +1,3 @@
-import JSZip from "jszip";
 import { buildFiles, MODEL_PRESETS, type BuildConfig, type ModelPreset } from "./codegen";
 import { TASK_FILES, COMMON_FILES } from "../generated/projectFiles";
 import { getTaskMeta } from "./tasks";
@@ -37,13 +36,6 @@ function setYamlBool(content: string, key: string, value: boolean): string {
     new RegExp(`^(\\s*${key}:\\s*)(?:true|false|True|False)`, "m"),
     `$1${value}`,
   );
-}
-
-/** Uncomment (or append) the `wandb` dependency so the install includes it. */
-function enableWandb(content: string): string {
-  if (/^\s*wandb\b/m.test(content)) return content; // already enabled
-  if (/^#\s*wandb\b/m.test(content)) return content.replace(/^#\s*wandb\b.*$/m, "wandb");
-  return `${content.trimEnd()}\nwandb\n`;
 }
 
 /**
@@ -86,13 +78,8 @@ export function projectFileMap(spec: ProjectSpec): Record<string, string> {
   if (spec.mode === "project") {
     for (const [p, c] of Object.entries(COMMON_FILES)) map[prefix + p] = c;
 
-    // If any task turns on progress logging (wandb), make sure the install covers it.
-    const anyWandb =
-      spec.selectedTasks.some((id) => ({ ...spec.settings, ...spec.perTaskSettings?.[id] }).useWandb) ||
-      !!spec.customConfig?.useWandb;
-    if (anyWandb && map[prefix + "requirements.txt"] !== undefined) {
-      map[prefix + "requirements.txt"] = enableWandb(map[prefix + "requirements.txt"]);
-    }
+    // Note: wandb (optional progress logging) ships as a calt-x dependency, so the
+    // conda install already covers it when a task turns logging on.
 
     // A friendly, project-specific README at the root.
     const taskFolders = [
@@ -110,6 +97,9 @@ export function projectFileMap(spec: ProjectSpec): Record<string, string> {
 }
 
 export async function buildProjectZip(spec: ProjectSpec): Promise<{ blob: Blob; filename: string }> {
+  // Lazy-load JSZip: it is only needed at download time, so it stays out of the
+  // initial bundle and is fetched on the first download click.
+  const { default: JSZip } = await import("jszip");
   const zip = new JSZip();
   for (const [path, content] of Object.entries(projectFileMap(spec))) {
     zip.file(path, path.endsWith(".sh") ? content.replace(/\r\n/g, "\n") : content);

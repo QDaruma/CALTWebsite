@@ -2,16 +2,65 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="./logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Defense-in-depth CSP for a static, no-backend site. Note: frame-ancestors
+         and X-Frame-Options can only be set via real HTTP headers (not possible on
+         GitHub Pages), so clickjacking protection is best-effort here. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'sha256-4b+tzwhQ7Z/JUIJAFZy8bW/ZHNM2iT9vWGD93eob1Mk='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"
+    />
+
     <title>CALT Task Builder: scaffold a Transformer math task</title>
     <meta
       name="description"
-      content="Create a ready-to-run CALT task without writing boilerplate. Pick a template, choose your statistics, download a ZIP."
+      content="Build a ready-to-run CALT project in your browser: pick algebraic tasks, tune a few settings, and download a complete project that trains a small Transformer. Nothing is uploaded."
     />
+    <link rel="canonical" href="https://qdaruma.github.io/CALTWebsite/" />
+    <link rel="icon" type="image/png" href="./logo.png" />
+    <link rel="apple-touch-icon" href="./logo.png" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CALT Task Builder" />
+    <meta
+      property="og:description"
+      content="Build a ready-to-run CALT project in your browser. Pick tasks, tune settings, download. Nothing is uploaded."
+    />
+    <meta property="og:url" content="https://qdaruma.github.io/CALTWebsite/" />
+    <meta property="og:image" content="https://qdaruma.github.io/CALTWebsite/logo.png" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="CALT Task Builder" />
+    <meta
+      name="twitter:description"
+      content="Build a ready-to-run CALT project in your browser. Pick tasks, tune settings, download."
+    />
+    <meta name="twitter:image" content="https://qdaruma.github.io/CALTWebsite/logo.png" />
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"CALT Task Builder","applicationCategory":"DeveloperApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Build a ready-to-run CALT project in your browser: pick algebraic tasks, tune settings, and download a complete project that trains a small Transformer.","url":"https://qdaruma.github.io/CALTWebsite/"}
+    </script>
+
+    <!-- Set theme + language before paint to avoid a flash of the wrong theme. -->
+    <script src="./theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <div style="max-width:42rem;margin:4rem auto;padding:0 1.5rem;font-family:system-ui,sans-serif;line-height:1.6">
+        <h1>CALT Task Builder</h1>
+        <p>
+          This tool builds a ready-to-run CALT project (a small Transformer trained
+          on algebraic tasks) entirely in your browser. It needs JavaScript enabled
+          to run. Please enable JavaScript, or learn more about CALT at
+          <a href="https://github.com/HiroshiKERA/calt">github.com/HiroshiKERA/calt</a>.
+        </p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

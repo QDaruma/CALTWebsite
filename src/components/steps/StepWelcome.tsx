@@ -61,6 +61,8 @@ export function StepWelcome() {
                 value={config.projectName}
                 onChange={(e) => patch({ projectName: e.target.value })}
                 onKeyDown={(e) => e.key === "Enter" && start()}
+                aria-invalid={!!error}
+                aria-describedby="project-name-help"
                 className="h-12 text-[15px]"
               />
               <Button size="lg" shimmer disabled={!canStart} onClick={start} className="sm:w-auto">
@@ -69,11 +71,11 @@ export function StepWelcome() {
             </div>
           </label>
           {error ? (
-            <p className="mt-2 text-left text-xs font-medium text-rose-500">{error}</p>
+            <p id="project-name-help" role="alert" className="mt-2 text-left text-xs font-medium text-rose-500">{error}</p>
           ) : config.projectName ? (
-            <p className="mt-2 text-left text-xs text-ink-400">{t.welcome.namedAs(toSnakeCase(config.projectName))}</p>
+            <p id="project-name-help" className="mt-2 text-left text-xs text-ink-400">{t.welcome.namedAs(toSnakeCase(config.projectName))}</p>
           ) : (
-            <p className="mt-2 text-left text-xs text-ink-400">{t.welcome.nameHelpEmpty}</p>
+            <p id="project-name-help" className="mt-2 text-left text-xs text-ink-400">{t.welcome.nameHelpEmpty}</p>
           )}
         </Card>
       </motion.div>

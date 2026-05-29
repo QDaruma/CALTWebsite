@@ -20,10 +20,23 @@ THE TASK I WANT, in my own words:
 ${desc}
 """
 
+FIRST, before writing code, decide and state these explicitly (as a short comment
+block at the top of the file), because the model can only learn what the examples
+show:
+  - INPUT  : what the question string contains, and its assumptions
+             (e.g. "two integers, each from 1 to 100, separated by a space").
+  - OUTPUT : what the answer string is (e.g. "their greatest common divisor").
+  - one concrete example pair, e.g.  "48 36"  ->  "12".
+Keep these assumptions (ranges, counts, allowed operations) as __init__ arguments
+with default values, so they are easy to change later — they map directly to the
+task's data.yaml config (the values under "problem_generator" are passed to
+__init__).
+
 Write ONE Python class named "${className}" that follows these rules EXACTLY:
 
-1. __init__(self, ...): store any settings as arguments that ALL have default
-   values (so the class can be created with no arguments).
+1. __init__(self, ...): store the assumptions above as arguments that ALL have
+   default values (e.g. low=1, high=100), so the class works with no arguments
+   AND the ranges can be tuned from data.yaml.
 2. __call__(self, seed: int) -> tuple[str, str]: return a (question, answer) pair.
 3. It MUST be deterministic. Call random.seed(seed) at the very start of __call__
    (and seed any other random source you use), so the same seed always returns
@@ -45,11 +58,16 @@ Fill in this skeleton:
 
 import random
 
+# INPUT  : <describe the question + assumptions, e.g. two integers 1..100>
+# OUTPUT : <describe the answer, e.g. their GCD>
+# EXAMPLE: "48 36" -> "12"
+
 
 class ${className}:
-    def __init__(self):
-        # store settings here (all with default values)
-        ...
+    def __init__(self, low: int = 1, high: int = 100):
+        # assumptions as tunable settings (these can be overridden from data.yaml)
+        self.low = low
+        self.high = high
 
     def __call__(self, seed: int) -> tuple[str, str]:
         random.seed(seed)

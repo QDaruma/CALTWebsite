@@ -8,9 +8,10 @@
 //        - ../.. (the monorepo layout, when the framework sits next to site/)
 //      `npm run sync:tasks` clones https://github.com/HiroshiKERA/calt-codebase and calls
 //      this with that path, so the site repo needs nothing checked out alongside.
-//   2. The site's own project-files/ (requirements.txt, pyproject.toml, the
-//      install scripts). These are packaging files the site owns, not the
-//      framework, so the calt-x pin lives here.
+//   2. The site's own project-files/ (pyproject.toml). This is a packaging file
+//      the site owns, not the framework, so the calt-x pin lives here.
+//      Installation is conda-based (see the generated README), so there are no
+//      install scripts to bundle.
 //
 // A "task" is any top-level framework folder that contains core/generator.py.
 // Run from the site/ directory:  node scripts/bundle-tasks.mjs [framework-path]
@@ -84,8 +85,9 @@ const common = {};
 if (existsSync(join(frameworkRoot, "shared"))) walk(join(frameworkRoot, "shared"), frameworkRoot, common);
 // Packaging files are owned by the site (project-files/), falling back to the
 // framework repo if a file is not overridden there. A README.md is generated at
-// download time, so it is not bundled here.
-for (const f of ["pyproject.toml", "requirements.txt", "install.sh", "install.ps1"]) {
+// download time, so it is not bundled here. Installation is conda-based, so no
+// install scripts are bundled.
+for (const f of ["pyproject.toml"]) {
   const local = join(projectFilesDir, f);
   const upstream = join(frameworkRoot, f);
   if (existsSync(local)) common[f] = readFileSync(local, "utf8");
@@ -93,10 +95,12 @@ for (const f of ["pyproject.toml", "requirements.txt", "install.sh", "install.ps
 }
 
 // ---- Snapshot stamp: records when this bundle was taken and the engine pin ----
+// The calt-x pin lives in pyproject.toml (e.g. `"calt-x==1.1.0",`).
 const caltLine =
-  (common["requirements.txt"] || "")
+  (common["pyproject.toml"] || "")
     .split("\n")
-    .find((l) => /^\s*calt-x\b/.test(l))
+    .map((l) => l.match(/calt-x[^"',]*/))
+    .find(Boolean)?.[0]
     ?.trim() || "calt-x (unpinned)";
 const bundledOn = new Date().toISOString().slice(0, 10);
 common["CALT_SNAPSHOT.txt"] =

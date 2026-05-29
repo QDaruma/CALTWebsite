@@ -8,5 +8,16 @@ export default defineConfig({
   base: "./",
   build: {
     outDir: "dist",
+    rollupOptions: {
+      output: {
+        // Split heavy, independently-cacheable libraries out of the app chunk so
+        // the initial download is smaller and vendor code is cached across deploys.
+        manualChunks: {
+          react: ["react", "react-dom"],
+          motion: ["framer-motion"],
+          prism: ["prismjs"],
+        },
+      },
+    },
   },
 });

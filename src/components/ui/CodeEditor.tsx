@@ -1,4 +1,4 @@
-import { useMemo, useRef, type CSSProperties, type KeyboardEvent } from "react";
+import { useLayoutEffect, useMemo, useRef, type CSSProperties, type KeyboardEvent } from "react";
 import Prism from "prismjs";
 import "prismjs/components/prism-python";
 import { cn } from "../../lib/utils";
@@ -35,6 +35,16 @@ export function CodeEditor({
 }) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
+
+  // Grow the editor to fit its content so the whole skeleton (including the
+  // __call__ definition) is visible immediately — no need to scroll or press
+  // Return to reveal lower lines. Runs on every value change and on mount.
+  useLayoutEffect(() => {
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = `${Math.max(ta.scrollHeight, minHeight)}px`;
+  }, [value, minHeight]);
 
   const html = useMemo(() => {
     // Add a trailing space so a final newline still renders a highlighted line.
@@ -76,6 +86,7 @@ export function CodeEditor({
       <pre
         ref={preRef}
         aria-hidden="true"
+        style={TEXT_STYLE}
         className="scroll-thin pointer-events-none absolute inset-0 m-0 overflow-auto whitespace-pre p-4"
       >
         <code
@@ -95,7 +106,7 @@ export function CodeEditor({
         onScroll={syncScroll}
         onKeyDown={onKeyDown}
         style={{ ...TEXT_STYLE, minHeight, caretColor: "rgb(var(--ink-800))" }}
-        className="scroll-thin relative block w-full resize-y overflow-auto whitespace-pre bg-transparent p-4 text-transparent outline-none"
+        className="scroll-thin relative block w-full resize-none overflow-x-auto overflow-y-hidden whitespace-pre bg-transparent p-4 text-transparent outline-none"
       />
     </div>
   );

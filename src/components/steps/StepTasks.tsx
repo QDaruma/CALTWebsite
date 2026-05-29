@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, Copy, Download, Pencil, Sigma, Sparkles } from "lucide-react";
+import { Check, ChevronDown, Copy, Download, FileCode2, Pencil, Sigma, Sparkles } from "lucide-react";
 import { useWizard, hasSelection, customBuildConfig } from "../../state/store";
 import { useT } from "../../i18n";
 import { TASKS } from "../../lib/tasks";
@@ -42,6 +42,7 @@ function AiPanel() {
       <p className="text-sm leading-relaxed text-ink-500">{t.data.aiIntro}</p>
       <Field label={t.data.aiDescLabel}>
         <TextArea rows={3} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder={t.data.aiDescPlaceholder} />
+        <p className="mt-1.5 text-xs leading-relaxed text-ink-400">{t.data.aiDescHint}</p>
       </Field>
       <div>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -137,8 +138,10 @@ function Measurements() {
             <button
               key={s.id}
               onClick={() => toggleCustomStat(s.id)}
+              aria-pressed={checked}
               className={cn(
                 "flex items-start gap-2.5 rounded-xl p-3 text-left ring-1 transition",
+                "outline-none focus-visible:ring-2 focus-visible:ring-brand-400/60",
                 checked ? "bg-brand-50/60 ring-brand-300" : "ring-ink-200 hover:ring-ink-300",
               )}
             >
@@ -183,6 +186,9 @@ function Measurements() {
                 minHeight={160}
               />
               <p className="text-xs text-ink-400">{ins.measureCodeNote}</p>
+              <p className="flex items-center gap-1.5 text-xs text-ink-400">
+                <FileCode2 size={13} className="flex-shrink-0 text-brand-500" /> {t.data.editsMetrics}
+              </p>
             </>
           )}
         </div>
@@ -231,6 +237,9 @@ function CustomBuilder() {
           <>
             <CodeEditor value={config.custom.code ?? ""} onChange={(v) => patchCustom({ code: v })} minHeight={340} />
             <p className="text-xs text-ink-400">{t.data.recipeNote}</p>
+            <p className="flex items-center gap-1.5 text-xs text-ink-400">
+              <FileCode2 size={13} className="flex-shrink-0 text-brand-500" /> {t.data.editsGenerator}
+            </p>
           </>
         )}
       </div>
@@ -284,7 +293,7 @@ export function StepTasks() {
             <button
               onClick={toggleCustomOpen}
               aria-expanded={customOpen}
-              className="flex min-w-0 flex-1 items-center gap-4 text-left outline-none"
+              className="flex min-w-0 flex-1 items-center gap-4 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-400/60"
             >
               <span
                 className={cn(
@@ -345,8 +354,10 @@ export function StepTasks() {
             <button
               key={task.id}
               onClick={() => toggleTask(task.id)}
+              aria-pressed={active}
               className={cn(
                 "group relative flex flex-col rounded-2xl bg-surface p-4 text-left ring-1 transition-all duration-200",
+                "outline-none focus-visible:ring-2 focus-visible:ring-brand-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--page))]",
                 active ? "ring-2 ring-brand-500 shadow-glow" : "ring-ink-200/70 shadow-card hover:-translate-y-0.5 hover:shadow-lifted hover:ring-ink-300",
               )}
             >

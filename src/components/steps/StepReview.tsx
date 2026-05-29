@@ -173,8 +173,8 @@ export function StepReview() {
               <CodeBlock
                 language="bash"
                 filename="terminal"
-                maxHeight="120px"
-                code={`# Linux, macOS, or WSL\nbash install.sh\n\n# Windows (PowerShell)\n./install.ps1`}
+                maxHeight="160px"
+                code={`# One-time setup with conda (details in README.md)\nconda create -n calt-env -c conda-forge sage python=3.12 -y\nconda activate calt-env\npip install calt-x==1.1.0 omegaconf matplotlib click`}
               />
             </div>
           )}
@@ -182,7 +182,7 @@ export function StepReview() {
             language="bash"
             filename="terminal"
             maxHeight="180px"
-            code={`cd ${config.downloadMode === "project" ? proj + "/" : ""}${firstFolder}/experiments/toy/scripts\npython generate.py\npython train.py\npython evaluate.py`}
+            code={`conda activate calt-env\ncd ${config.downloadMode === "project" ? proj + "/" : ""}${firstFolder}/experiments/toy/scripts\npython generate.py\npython train.py\npython evaluate.py`}
           />
         </Disclosure>
       </div>

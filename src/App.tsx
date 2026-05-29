@@ -26,20 +26,28 @@ export default function App() {
 
   return (
     <div className="app-bg min-h-full">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+      >
+        Skip to content
+      </a>
       <TopBar />
-      {step === 0 ? (
-        <AnimatePresence mode="wait">
-          <motion.div key="landing" variants={variants} initial="initial" animate="animate" exit="exit" transition={transition}>
-            <StepWelcome />
-          </motion.div>
-        </AnimatePresence>
-      ) : (
-        <BuilderShell>
-          <motion.div key={step} variants={variants} initial="initial" animate="animate" transition={transition}>
-            <Step />
-          </motion.div>
-        </BuilderShell>
-      )}
+      <main id="main">
+        {step === 0 ? (
+          <AnimatePresence mode="wait">
+            <motion.div key="landing" variants={variants} initial="initial" animate="animate" exit="exit" transition={transition}>
+              <StepWelcome />
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <BuilderShell>
+            <motion.div key={step} variants={variants} initial="initial" animate="animate" transition={transition}>
+              <Step />
+            </motion.div>
+          </BuilderShell>
+        )}
+      </main>
     </div>
   );
 }

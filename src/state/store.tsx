@@ -1,6 +1,11 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { type BuildConfig, type ModelPreset } from "../lib/codegen";
 import { defaultSelectedStats } from "../lib/stats";
+
+// Persist the in-progress wizard to sessionStorage so a refresh (or accidental
+// reload) does not wipe the user's choices. sessionStorage (not localStorage) so
+// a fresh tab starts clean.
+const STORAGE_KEY = "calt-wizard";
 
 export interface TaskSettings {
   numTrain: number;
@@ -82,9 +87,38 @@ interface WizardCtx {
 
 const Ctx = createContext<WizardCtx | null>(null);
 
+interface Persisted {
+  config: WizardConfig;
+  step: number;
+}
+
+function loadPersisted(): Persisted {
+  if (typeof window === "undefined") return { config: defaultConfig, step: 0 };
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return { config: defaultConfig, step: 0 };
+    const saved = JSON.parse(raw) as Partial<Persisted>;
+    // Merge over defaults so newly-added config keys are never undefined.
+    const config = { ...defaultConfig, ...saved.config, custom: { ...defaultConfig.custom, ...saved.config?.custom } };
+    const step = Math.max(0, Math.min(LAST_STEP, saved.step ?? 0));
+    return { config, step };
+  } catch {
+    return { config: defaultConfig, step: 0 };
+  }
+}
+
 export function WizardProvider({ children }: { children: ReactNode }) {
-  const [config, setConfig] = useState<WizardConfig>(defaultConfig);
-  const [step, setStepState] = useState(0);
+  const initial = loadPersisted();
+  const [config, setConfig] = useState<WizardConfig>(initial.config);
+  const [step, setStepState] = useState(initial.step);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ config, step }));
+    } catch {
+      /* storage full or unavailable — non-fatal */
+    }
+  }, [config, step]);
 
   const value = useMemo<WizardCtx>(() => {
     const setStep = (s: number) => setStepState(Math.max(0, Math.min(LAST_STEP, s)));
@@ -129,6 +163,11 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       reset: () => {
         setConfig(defaultConfig);
         setStepState(0);
+        try {
+          sessionStorage.removeItem(STORAGE_KEY);
+        } catch {
+          /* ignore */
+        }
       },
     };
   }, [config, step]);

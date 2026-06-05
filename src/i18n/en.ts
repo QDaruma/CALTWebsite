@@ -60,6 +60,10 @@ export const en = {
     measurementsHint: "Statistics computed about your custom task's data.",
     tokenizer: "Tokenizer / vocabulary (optional)",
     optionsLabel: "Options",
+    tabGenerator: "Generator",
+    tabTokenizer: "Tokenizer",
+    tabMeasure: "Measurements",
+    sectionTabs: "Custom task sections",
     items: {
       parity: {
         name: "Permutation parity",
@@ -95,6 +99,7 @@ export const en = {
     recipeNote: "Keep a class with __call__(self, seed) that returns a (question, answer) pair of text.",
     editsGenerator: "This becomes core/generator.py in the task folder. Edit it there later for local tweaks.",
     editsMetrics: "These lines go into core/metrics.py (the instance_stats function).",
+    editsLexer: "This becomes experiments/toy/configs/lexer.yaml. Edit it there later if your generator changes.",
     tabWrite: "Write code",
     tabAi: "Ask an AI to write it",
     aiIntro:
@@ -207,6 +212,18 @@ export const en = {
     whole: "Whole",
     attachSign: "Attach sign to numbers",
     allowFloat: "Allow decimals (e.g. 0.71)",
+    symbolsInfo:
+      "List every operator or letter that can appear in your questions or answers. Numbers are set separately below. Anything you forget becomes an “unknown” token the model can't read.",
+    numMinInfo:
+      "The smallest (most negative) whole number your data can contain. Set it to cover every value your generator can produce.",
+    numMaxInfo:
+      "The largest whole number your data can contain. Together with the smallest, this sets the range of number tokens the model knows.",
+    digitGroupInfo:
+      "“Whole” gives each number its own token: simple, but it needs a large vocabulary. Splitting into 1, 2 or 3-digit groups lets big numbers reuse a tiny vocabulary, at the cost of longer sequences.",
+    attachSignInfo:
+      "On: a leading minus is part of the number, so “-5” is a single token (for signed values). Off: “-” is treated as a separate symbol, like a subtraction sign.",
+    allowFloatInfo:
+      "Turn on if your numbers can have a decimal point (e.g. 0.71). Leave it off if your data only uses whole numbers.",
   },
 
   settings: {
@@ -214,7 +231,7 @@ export const en = {
     title: "Settings",
     subtitle: "Fine-tune each task's training settings. The defaults work well, so only change them if you want to.",
     appliesNote:
-      "These are saved into each task's config when you download. To change them later, edit the files in experiments/toy/configs/ inside the task folder: data.yaml for the number of examples, train.yaml for the model size, rounds, and logging.",
+      "These are saved into each task's config when you download. To change them later, edit the files in experiments/toy/configs/ inside the task folder: data.yaml for the number of examples, train.yaml for the model size, training rounds, position embedding and logging, and lexer.yaml for the tokenizer vocabulary.",
     noTasks: "No tasks selected yet. Go back and pick at least one.",
     continueLabel: "Continue",
     previewLegend: "This is what your settings write into the task's config files. Highlighted lines are the ones the controls edit; a line flashes when it changes.",

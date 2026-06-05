@@ -52,6 +52,10 @@ export const ja: Dict = {
     measurementsHint: "自分のタスクのデータについて計算される統計です。",
     tokenizer: "トークナイザ / 語彙（任意）",
     optionsLabel: "オプション",
+    tabGenerator: "ジェネレータ",
+    tabTokenizer: "トークナイザ",
+    tabMeasure: "計測",
+    sectionTabs: "カスタムタスクのセクション",
     items: {
       parity: {
         name: "置換の符号",
@@ -69,6 +73,7 @@ export const ja: Dict = {
     recipeNote: "(question, answer) のテキストのペアを返す __call__(self, seed) を持つクラスにしてください。",
     editsGenerator: "これはタスクフォルダ内の core/generator.py になります（後でそこを編集して微調整できます）。",
     editsMetrics: "これらの行は core/metrics.py（instance_stats 関数）に入ります。",
+    editsLexer: "これは experiments/toy/configs/lexer.yaml になります。ジェネレータを変えたら後でそこを編集してください。",
     tabWrite: "コードを書く",
     tabAi: "AIに書いてもらう",
     aiIntro:
@@ -174,6 +179,18 @@ export const ja: Dict = {
     whole: "まとめて",
     attachSign: "符号を数に付ける",
     allowFloat: "小数を許可（例：0.71）",
+    symbolsInfo:
+      "質問や答えに現れ得る演算子・文字をすべて挙げてください。数値は下で別に設定します。書き忘れたものはモデルが読めない「未知」トークンになります。",
+    numMinInfo:
+      "データに現れ得る最小（最も負）の整数です。ジェネレータが生成し得るすべての値をカバーするように設定してください。",
+    numMaxInfo:
+      "データに現れ得る最大の整数です。最小値と合わせて、モデルが扱う数値トークンの範囲が決まります。",
+    digitGroupInfo:
+      "「まとめて」は各数値に1トークンを割り当てます（単純ですが語彙が大きくなります）。1・2・3桁のグループに分けると、大きな数値も小さな語彙で表せますが、系列は長くなります。",
+    attachSignInfo:
+      "オン：先頭のマイナスを数値の一部として扱い、「-5」を1トークンにします（符号付きの値向け）。オフ：「-」は引き算などの独立した記号として扱います。",
+    allowFloatInfo:
+      "数値に小数点が含まれ得る場合（例：0.71）はオンにします。整数のみならオフのままにしてください。",
   },
 
   settings: {
@@ -181,7 +198,7 @@ export const ja: Dict = {
     title: "設定",
     subtitle: "各タスクの学習設定を個別に調整できます。デフォルトのままでも問題ありません。",
     appliesNote:
-      "ダウンロード時に各タスクの設定ファイルへ書き込まれます。後で変更するには、タスクフォルダ内の experiments/toy/configs/ を編集してください（例の数は data.yaml、モデルの大きさ・学習回数・ログは train.yaml）。",
+      "ダウンロード時に各タスクの設定ファイルへ書き込まれます。後で変更するには、タスクフォルダ内の experiments/toy/configs/ を編集してください（例の数は data.yaml、モデルの大きさ・学習回数・位置埋め込み・ログは train.yaml、トークナイザの語彙は lexer.yaml）。",
     noTasks: "タスクが選択されていません。戻って少なくとも1つ選んでください。",
     continueLabel: "続ける",
     previewLegend: "設定がタスクの設定ファイルに書き込む内容です。コントロールが編集する行をハイライトし、変更された行は一瞬光ります。",

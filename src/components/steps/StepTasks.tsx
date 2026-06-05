@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, Copy, Download, FileCode2, Pencil, Sigma, Sparkles, Type } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Check, ChevronDown, Copy, Download, FileCode2, Pencil, Sigma, Sparkles } from "lucide-react";
 import { useWizard, hasSelection, customBuildConfig } from "../../state/store";
 import { useT } from "../../i18n";
 import { TASKS } from "../../lib/tasks";
@@ -12,7 +12,7 @@ import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { Segmented } from "../ui/Segmented";
 import { CodeEditor } from "../ui/CodeEditor";
-import { Disclosure } from "../ui/Disclosure";
+import { InfoHint } from "../ui/InfoHint";
 import { Field, TextInput, TextArea } from "../ui/controls";
 import { Icon } from "../Icon";
 import { StepHeader, StepFooter } from "../layout/StepChrome";
@@ -122,12 +122,26 @@ function MeasureAiPanel() {
   );
 }
 
+// Seeded into the measurement editor so it is never empty: shows the format and
+// that you add one `stats[...] = ...` line per measurement.
+const MEASURE_SEED = `# One measurement per line. Edit these or add your own:
+stats["answer_length"] = len(str(answer).split())
+stats["biggest_number"] = max(_ints(problem), default=0)`;
+
 function Measurements() {
   const { config, toggleCustomStat, patchCustom } = useWizard();
   const t = useT();
   const ts = t.stats;
   const ins = t.insights;
   const [mode, setMode] = useState<"code" | "ai">("ai");
+
+  // First time the user opens "Write code", give them a working example to adapt.
+  useEffect(() => {
+    if (mode === "code" && config.custom.metricsCode == null) {
+      patchCustom({ metricsCode: MEASURE_SEED });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   return (
     <div className="space-y-4">
@@ -202,19 +216,21 @@ function Toggle({
   label,
   checked,
   onChange,
+  info,
 }: {
   label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  info?: ReactNode;
 }) {
-  return (
+  const btn = (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={cn(
-        "flex h-11 items-center justify-between gap-3 rounded-xl px-3.5 ring-1 outline-none transition focus-visible:ring-2 focus-visible:ring-brand-400/50",
+        "flex h-11 w-full items-center justify-between gap-3 rounded-xl px-3.5 ring-1 outline-none transition focus-visible:ring-2 focus-visible:ring-brand-400/50",
         checked ? "bg-brand-50/60 ring-brand-300" : "ring-ink-200 hover:ring-ink-300",
       )}
     >
@@ -223,6 +239,13 @@ function Toggle({
         <span className={cn("absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform", checked ? "translate-x-4" : "translate-x-0")} />
       </span>
     </button>
+  );
+  if (!info) return btn;
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="min-w-0 flex-1">{btn}</div>
+      {info}
+    </div>
   );
 }
 
@@ -241,7 +264,10 @@ function LexerEditor() {
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-ink-500">{t.lexer.intro}</p>
-      <Field label={t.lexer.symbols}>
+      <Field
+        label={t.lexer.symbols}
+        info={<InfoHint title={t.lexer.symbols}><p>{t.lexer.symbolsInfo}</p></InfoHint>}
+      >
         <TextInput
           value={lx.misc.join(" ")}
           placeholder="+ - * ^ | x y"
@@ -250,15 +276,24 @@ function LexerEditor() {
         <p className="mt-1 text-xs text-ink-400">{t.lexer.symbolsHint}</p>
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t.lexer.numMin}>
+        <Field
+          label={t.lexer.numMin}
+          info={<InfoHint title={t.lexer.numMin}><p>{t.lexer.numMinInfo}</p></InfoHint>}
+        >
           <TextInput inputMode="numeric" value={String(lx.numbersMin)} onChange={(e) => set({ numbersMin: toInt(e.target.value, lx.numbersMin) })} />
         </Field>
-        <Field label={t.lexer.numMax}>
+        <Field
+          label={t.lexer.numMax}
+          info={<InfoHint title={t.lexer.numMax}><p>{t.lexer.numMaxInfo}</p></InfoHint>}
+        >
           <TextInput inputMode="numeric" value={String(lx.numbersMax)} onChange={(e) => set({ numbersMax: toInt(e.target.value, lx.numbersMax) })} />
         </Field>
       </div>
       <div>
-        <span className="mb-2 block text-sm font-bold text-ink-800">{t.lexer.digitGroup}</span>
+        <div className="mb-2 flex items-center gap-1.5">
+          <span className="text-sm font-bold text-ink-800">{t.lexer.digitGroup}</span>
+          <InfoHint title={t.lexer.digitGroup}><p>{t.lexer.digitGroupInfo}</p></InfoHint>
+        </div>
         <Segmented
           ariaLabel="digit-group"
           value={String(lx.digitGroup)}
@@ -273,17 +308,33 @@ function LexerEditor() {
         <p className="mt-1.5 text-xs text-ink-400">{t.lexer.digitGroupHint}</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Toggle label={t.lexer.attachSign} checked={lx.attachSign} onChange={(v) => set({ attachSign: v })} />
-        <Toggle label={t.lexer.allowFloat} checked={lx.allowFloat} onChange={(v) => set({ allowFloat: v })} />
+        <Toggle
+          label={t.lexer.attachSign}
+          checked={lx.attachSign}
+          onChange={(v) => set({ attachSign: v })}
+          info={<InfoHint title={t.lexer.attachSign}><p>{t.lexer.attachSignInfo}</p></InfoHint>}
+        />
+        <Toggle
+          label={t.lexer.allowFloat}
+          checked={lx.allowFloat}
+          onChange={(v) => set({ allowFloat: v })}
+          info={<InfoHint title={t.lexer.allowFloat}><p>{t.lexer.allowFloatInfo}</p></InfoHint>}
+        />
       </div>
+      <p className="flex items-center gap-1.5 text-xs text-ink-400">
+        <FileCode2 size={13} className="flex-shrink-0 text-brand-500" /> {t.data.editsLexer}
+      </p>
     </div>
   );
 }
+
+type CustomSection = "generator" | "tokenizer" | "measure";
 
 function CustomBuilder() {
   const { config, patchCustom } = useWizard();
   const t = useT();
   const [mode, setMode] = useState<"code" | "ai">("code");
+  const [section, setSection] = useState<CustomSection>("generator");
 
   // Seed the editor with a working skeleton the first time the custom task is enabled.
   useEffect(() => {
@@ -309,6 +360,7 @@ function CustomBuilder() {
       ...(nameIsUntouched(config.custom.name) ? { name: id === "custom" ? "My task" : tpl.name } : {}),
     });
   };
+  const activeTpl = getTemplate(config.custom.templateId);
 
   return (
     <div className="mt-4 space-y-4 border-t border-ink-100 pt-4">
@@ -316,7 +368,7 @@ function CustomBuilder() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)] lg:items-start">
         <div>
           <SectionLabel>{t.tasks.startFrom}</SectionLabel>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             {TEMPLATES.map((tpl) => {
               const active = config.custom.templateId === tpl.id;
               return (
@@ -325,33 +377,26 @@ function CustomBuilder() {
                   onClick={() => pickTemplate(tpl.id)}
                   aria-pressed={active}
                   className={cn(
-                    "flex items-start gap-2.5 rounded-xl p-2.5 text-left ring-1 outline-none transition focus-visible:ring-2 focus-visible:ring-brand-400/60",
-                    active ? "bg-brand-50/60 ring-brand-300" : "ring-ink-200 hover:ring-ink-300",
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium outline-none ring-1 transition focus-visible:ring-2 focus-visible:ring-brand-400/60",
+                    active
+                      ? "bg-brand-600 text-white ring-brand-600"
+                      : "bg-surface text-ink-600 ring-ink-200 hover:text-ink-800 hover:ring-ink-300",
                   )}
                 >
-                  <span
-                    className={cn(
-                      "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors",
-                      active ? "bg-brand-600 text-white" : "bg-ink-100 text-ink-500",
-                    )}
-                  >
-                    <Icon name={tpl.icon} size={16} />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="flex items-center gap-1.5 text-sm font-semibold text-ink-800">
-                      {tpl.name}
-                      {tpl.extraDeps?.length ? (
-                        <Badge tone="amber">needs {tpl.extraDeps.join(", ")}</Badge>
-                      ) : tpl.requiresSage ? (
-                        <Badge tone="amber">{t.tasks.needsSage}</Badge>
-                      ) : null}
-                    </span>
-                    <span className="block text-xs leading-snug text-ink-500">{tpl.beginnerSummary}</span>
-                  </span>
+                  <Icon name={tpl.icon} size={14} className="flex-shrink-0" />
+                  {tpl.name}
                 </button>
               );
             })}
           </div>
+          <p className="mt-2.5 text-xs leading-snug text-ink-500">
+            {activeTpl.beginnerSummary}
+            {activeTpl.extraDeps?.length ? (
+              <span className="text-amber-600"> · needs {activeTpl.extraDeps.join(", ")}</span>
+            ) : activeTpl.requiresSage ? (
+              <span className="text-amber-600"> · {t.tasks.needsSage}</span>
+            ) : null}
+          </p>
         </div>
 
         <Field label={t.tasks.customNameLabel}>
@@ -366,57 +411,61 @@ function CustomBuilder() {
         </Field>
       </div>
 
-      {/* Authoring area: the code/AI editor is capped so it never blows up the page. */}
+      {/* One section at a time (tabs) so the generator, tokenizer and measurements
+          never stack into a long scroll. */}
       <div className="space-y-3">
         <Segmented
-          ariaLabel="recipe-mode"
-          value={mode}
-          onChange={(v) => setMode(v)}
+          ariaLabel={t.tasks.sectionTabs}
+          value={section}
+          onChange={(v) => setSection(v as CustomSection)}
           options={[
-            { value: "code", label: t.data.tabWrite },
-            { value: "ai", label: t.data.tabAi },
+            { value: "generator", label: t.tasks.tabGenerator },
+            { value: "tokenizer", label: t.tasks.tabTokenizer },
+            { value: "measure", label: t.tasks.tabMeasure },
           ]}
         />
-        {mode === "ai" ? (
-          <AiPanel />
-        ) : (
-          <>
-            <CodeEditor
-              value={config.custom.code ?? ""}
-              onChange={(v) => patchCustom({ code: v })}
-              minHeight={280}
-              maxHeight={440}
+
+        {section === "generator" && (
+          <div className="space-y-3">
+            <Segmented
+              ariaLabel="recipe-mode"
+              value={mode}
+              onChange={(v) => setMode(v)}
+              options={[
+                { value: "code", label: t.data.tabWrite },
+                { value: "ai", label: t.data.tabAi },
+              ]}
             />
-            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-400">
-              <span className="inline-flex items-center gap-1.5">
-                <FileCode2 size={13} className="flex-shrink-0 text-brand-500" /> {t.data.editsGenerator}
-              </span>
-              <span className="text-ink-300">·</span>
-              <span>{t.data.recipeNote}</span>
-            </p>
-          </>
+            {mode === "ai" ? (
+              <AiPanel />
+            ) : (
+              <>
+                <CodeEditor
+                  value={config.custom.code ?? ""}
+                  onChange={(v) => patchCustom({ code: v })}
+                  minHeight={280}
+                  maxHeight={440}
+                />
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-400">
+                  <span className="inline-flex items-center gap-1.5">
+                    <FileCode2 size={13} className="flex-shrink-0 text-brand-500" /> {t.data.editsGenerator}
+                  </span>
+                  <span className="text-ink-300">·</span>
+                  <span>{t.data.recipeNote}</span>
+                </p>
+              </>
+            )}
+          </div>
         )}
-      </div>
 
-      {/* Optional / advanced — collapsed by default so they don't add scroll. */}
-      <div className="space-y-2.5">
-        <SectionLabel>{t.tasks.optionsLabel}</SectionLabel>
-        <Disclosure
-          icon={<Type size={16} className="text-brand-600" />}
-          title={t.tasks.tokenizer}
-          hint={<span className="text-xs font-normal text-ink-400">{t.review.optional}</span>}
-        >
-          <LexerEditor />
-        </Disclosure>
+        {section === "tokenizer" && <LexerEditor />}
 
-        <Disclosure
-          icon={<Sigma size={16} className="text-brand-600" />}
-          title={t.tasks.measurements}
-          hint={<span className="text-xs font-normal text-ink-400">{t.review.optional}</span>}
-        >
-          <p className="mb-3 text-sm text-ink-500">{t.tasks.measurementsHint}</p>
-          <Measurements />
-        </Disclosure>
+        {section === "measure" && (
+          <div>
+            <p className="mb-3 text-sm text-ink-500">{t.tasks.measurementsHint}</p>
+            <Measurements />
+          </div>
+        )}
       </div>
     </div>
   );

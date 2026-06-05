@@ -53,10 +53,13 @@ export const en = {
     includeCustom: "Include in project",
     included: (n: number) => `${n} in your project`,
     continueLabel: "Continue",
+    startFrom: "Start from a template",
     customNameLabel: "Task name",
     customNamePlaceholder: "e.g. Add two numbers",
     measurements: "What to measure (optional)",
     measurementsHint: "Statistics computed about your custom task's data.",
+    tokenizer: "Tokenizer / vocabulary (optional)",
+    optionsLabel: "Options",
     items: {
       parity: {
         name: "Permutation parity",
@@ -70,11 +73,27 @@ export const en = {
         name: "Border basis",
         summary: "Compute the border basis of a zero-dimensional polynomial ideal.",
       },
+      integer_factorization: {
+        name: "Integer factorization",
+        summary: "Recover the prime numbers whose product makes a given integer.",
+      },
+      gf17_addition: {
+        name: "Modular running sums",
+        summary: "Add up a list of numbers step by step, wrapping around at 17 (finite-field arithmetic).",
+      },
+      eigvec_3x3: {
+        name: "Dominant eigenvector",
+        summary: "Find the main direction (top eigenvector) of a 3×3 symmetric matrix, on real-valued data.",
+      },
+      polynomial_addition: {
+        name: "Polynomial running sums",
+        summary: "Add several multivariate polynomials together, one at a time.",
+      },
     } as Record<string, { name: string; summary: string }>,
   },
   data: {
     recipeNote: "Keep a class with __call__(self, seed) that returns a (question, answer) pair of text.",
-    editsGenerator: "This becomes core/generator.py in the task folder — edit it there later for local tweaks.",
+    editsGenerator: "This becomes core/generator.py in the task folder. Edit it there later for local tweaks.",
     editsMetrics: "These lines go into core/metrics.py (the instance_stats function).",
     tabWrite: "Write code",
     tabAi: "Ask an AI to write it",
@@ -116,7 +135,7 @@ export const en = {
     examplesQ: "How many examples?",
     examplesInfoTitle: "Number of examples",
     examplesInfo:
-      "More examples usually help the model learn better, but take longer to prepare and train. “Balanced” is a good default.",
+      "More examples usually help the model learn better, but take longer to prepare and train. “Balanced” is a good default; use “Quick” to test the pipeline faster, or “Thorough” for the best results.",
     sizeQuick: "Quick",
     sizeBalanced: "Balanced",
     sizeThorough: "Thorough",
@@ -130,6 +149,22 @@ export const en = {
     brainNoteSmall: "Fast to train. Great for a first try and simpler patterns.",
     brainNoteMedium: "A balanced choice that works well for most patterns.",
     brainNoteLarge: "Most capable, but slower. Best run on a powerful computer.",
+    posEmb: "Position embedding",
+    posEmbInfoTitle: "Position embedding",
+    posEmbInfo:
+      "How the model knows the order of the tokens (which symbol is 1st, 2nd, and so on). “Learned” is the default and works well for most tasks; the rest are alternative methods.",
+    posEmbLearned: "Learned",
+    posEmbSinusoidal: "Sinusoidal",
+    posEmbRope: "RoPE",
+    posEmbNone: "None",
+    posEmbNoteGeneric:
+      "The model learns the positions by itself during training. A solid default that fits most tasks.",
+    posEmbNoteSinusoidal:
+      "Fixed wave patterns (the original Transformer recipe). Can help with inputs longer than those seen in training.",
+    posEmbNoteRope:
+      "Rotary positions. Often the best at handling inputs longer than those seen in training.",
+    posEmbNoteNone:
+      "No position information at all. Only pick this if the order of the tokens does not matter for your task.",
     rounds: "Training rounds",
     roundsInfoTitle: "Training rounds",
     roundsInfo:
@@ -159,6 +194,21 @@ export const en = {
     sMode: "Download",
     back: "Back",
   },
+  lexer: {
+    intro:
+      "Set the tokenizer to match the data your generator produces. Every symbol that can appear in the input or output must be listed here, or it becomes an unknown token.",
+    symbols: "Symbols in your data",
+    symbolsHint: "Space-separated. Include every operator/letter that appears, e.g. + - * ^ | x y",
+    numMin: "Smallest number",
+    numMax: "Largest number",
+    digitGroup: "How numbers become tokens",
+    digitGroupHint:
+      "Whole = one token per number. 1 / 2 / 3 = split numbers into digit groups, so large numbers reuse a tiny vocabulary.",
+    whole: "Whole",
+    attachSign: "Attach sign to numbers",
+    allowFloat: "Allow decimals (e.g. 0.71)",
+  },
+
   settings: {
     eyebrow: "Step 2",
     title: "Settings",
@@ -167,6 +217,9 @@ export const en = {
       "These are saved into each task's config when you download. To change them later, edit the files in experiments/toy/configs/ inside the task folder: data.yaml for the number of examples, train.yaml for the model size, rounds, and logging.",
     noTasks: "No tasks selected yet. Go back and pick at least one.",
     continueLabel: "Continue",
+    previewLegend: "This is what your settings write into the task's config files. Highlighted lines are the ones the controls edit; a line flashes when it changes.",
+    previewLexer: "Tokenizer vocabulary",
+    previewFiles: "Config file",
   },
   rail: { tasks: "Tasks", settings: "Settings", finish: "Finish" },
   railSub: { tasks: "What to include", settings: "Data & model", finish: "Download" },

@@ -8,6 +8,38 @@ import { toSnakeCase, toGeneratorClassName } from "./utils";
 
 export type ModelPreset = "small" | "medium" | "large";
 
+// Positional-embedding strategy written to train.yaml (model.use_positional_embedding).
+// Values accepted by the installed calt `generic` model: generic (= learnable) /
+// sinusoidal / rope / none. ("generic" is the learnable embedding; the engine also
+// accepts the alias "learned" only once the library fix is published.)
+export type PosEmbedding = "generic" | "sinusoidal" | "rope" | "none";
+
+// User-editable tokenizer settings (lexer.yaml). Mirrors the real CALT schema:
+// vocab.range.numbers, vocab.misc, number_policy.{attach_sign,digit_group,allow_float}.
+export interface LexerConfig {
+  numbersMin: number;
+  numbersMax: number;
+  misc: string[];
+  digitGroup: number;
+  attachSign: boolean;
+  allowFloat: boolean;
+  strict: boolean;
+}
+
+/** Default lexer config for a template (what the generator is expected to emit). */
+export function defaultLexerConfig(templateId: string, vals: ParamValues): LexerConfig {
+  const lx = getTemplate(templateId).lexer(vals);
+  return {
+    numbersMin: lx.numbers[1],
+    numbersMax: lx.numbers[2],
+    misc: lx.misc,
+    digitGroup: lx.digitGroup,
+    attachSign: lx.attachSign,
+    allowFloat: lx.allowFloat ?? false,
+    strict: lx.strict,
+  };
+}
+
 export interface BuildConfig {
   taskName: string;
   description: string;
@@ -18,10 +50,13 @@ export interface BuildConfig {
   selectedStats: string[];
   /** Raw Python lines injected into instance_stats() for custom measurements. */
   metricsCode: string | null;
+  /** User edits to lexer.yaml; falls back to the template default when null. */
+  lexerOverride?: LexerConfig | null;
   numTrain: number;
   numTest: number;
   epochs: number;
   modelPreset: ModelPreset;
+  posEmbedding: PosEmbedding;
   useWandb: boolean;
 }
 
@@ -224,17 +259,14 @@ dataset:
 }
 
 function lexerYaml(cfg: BuildConfig): string {
-  const t = getTemplate(cfg.templateId);
-  const lx = t.lexer(cfg.paramValues);
-  const numbersLine = `    numbers: ["", ${lx.numbers[1]}, ${lx.numbers[2]}]`;
-  const signedLine = lx.signed
-    ? `\n    signed: ["", ${lx.signed[1]}, ${lx.signed[2]}]`
-    : "";
+  // Use the user's edits when present, otherwise the template's default suggestion.
+  const lx = cfg.lexerOverride ?? defaultLexerConfig(cfg.templateId, cfg.paramValues);
+  const numbersLine = `    numbers: ["", ${lx.numbersMin}, ${lx.numbersMax}]`;
   return `# Tokenizer vocabulary. Every symbol that can appear in an input OR output
 # string must be covered here, otherwise it becomes an [UNK] token.
 vocab:
   range:
-${numbersLine}${signedLine}
+${numbersLine}
   misc: ${yamlFlowList(lx.misc)}
   special_tokens: {}
   flags:
@@ -244,7 +276,7 @@ ${numbersLine}${signedLine}
 number_policy:
   attach_sign: ${lx.attachSign}
   digit_group: ${lx.digitGroup}
-  allow_float: false
+  allow_float: ${lx.allowFloat}
 
 strict: ${lx.strict}
 include_base_vocab: true
@@ -265,6 +297,7 @@ model:
   encoder_ffn_dim: ${m.ffn}
   decoder_ffn_dim: ${m.ffn}
   max_sequence_length: ${t.maxSeqLen}
+  use_positional_embedding: ${cfg.posEmbedding}
 
 train:
   save_dir: ../outputs/results

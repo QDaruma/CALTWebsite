@@ -11,28 +11,37 @@ Transformer models on algebraic tasks. This app is the friendly front door to it
 
 - **Static site.** No backend. React + Vite + TypeScript + Tailwind.
 - **Light / dark theme** and **English / 日本語**, both switchable in the top bar.
-- **Self-updating task content.** The ready-made tasks come from the CALT framework
-  repo and are refreshed with one command (see *Updating the tasks*).
+- **Self-updating task content.** The ready-made tasks are a snapshot of the
+  **QDaruma/CALTCode** repo, refreshed by re-bundling (see *Updating the tasks*).
+
+> This is one of three coordinated repos (this site, **CALTCode** = task code,
+> **HiroshiKERA/calt** = the `calt-x` engine). For the full picture, the strategy,
+> and the current loose ends, read **[AI_CONTEXT.md](AI_CONTEXT.md)** first.
 
 ## How a visitor uses it
 
 1. **Name the project** on the landing screen.
-2. **Tasks.** Pick from the ready-made tasks (parity, Gröbner basis, border basis),
-   and/or open **Build your own task** to describe a custom one. The custom builder
-   can write the data generator for you via a copy-paste AI prompt, or you paste in
-   code. It can also add custom measurements the same way.
-3. **Settings.** Tune each selected task independently: dataset size, model size,
-   training rounds, and progress logging. Defaults are sensible.
-4. **Finish.** Choose *Full project* or *Tasks only*, see what is inside, and
-   download the ZIP. A short, copy-paste run guide is included.
+2. **Tasks.** Pick from six ready-made tasks (parity, Gröbner basis, integer
+   factorization, GF(17) running sums, 3×3 eigenvector, polynomial running sums),
+   and/or open **Build your own task**. The custom builder can write the generator
+   via a copy-paste AI prompt or your own code, let you edit the **tokenizer
+   (lexer.yaml)**, and add custom measurements.
+3. **Settings.** Tune each task: dataset size (10k / 100k / 1M), model size, training
+   rounds, **position embedding**, and progress logging — with a **live preview of
+   the generated `train.yaml`/`data.yaml`** beside the controls, highlighting the
+   lines each control edits.
+4. **Finish.** Choose *Full project* or *Tasks only*, peek inside, and download the
+   ZIP. A copy-paste run guide (conda install + 3 commands) is included.
 
-The downloaded project runs locally with `install.sh` / `install.ps1` then a few
-`python` commands. The heavy engine (`calt-x`) is installed from PyPI and is
-**pinned** to a tested version so downloads keep working.
+The downloaded project installs the engine with **conda** (SageMath) + `pip`. ⚠️ The
+engine `calt-x` is currently installed from a **git branch**
+(`feature/offline-pretokenization`), because the tasks need its `calt.io.preprocess`.
+This moves back to a pinned release once that branch is merged (see AI_CONTEXT §11).
 
 ## Run locally
 
-Requires Node 18+.
+Requires Node 18+ (on this project's dev box, node lives in a conda env:
+`conda activate nodejs`).
 
 ```bash
 npm install
@@ -52,18 +61,20 @@ domain or `https://<user>.github.io/<repo>/`).
 ## Updating the tasks
 
 The ready-made task files are a snapshot baked into `src/generated/projectFiles.ts`.
-To refresh them from the framework repo:
+Refresh them by re-bundling from a local **CALTCode** clone (the primary path):
 
 ```bash
-npm run sync:tasks   # clones HiroshiKERA/calt-codebase, re-bundles the snapshot
+node scripts/bundle-tasks.mjs /path/to/CALTCode
+npm run build
 ```
 
-Then review the diff in `src/generated/projectFiles.ts`, rebuild, and commit. To
-point at a different source repo: `CALT_REPO_URL=<url> npm run sync:tasks`. To
-bundle from a local checkout instead of cloning: `npm run bundle -- /path/to/CALTCode`.
+Then review the diff in `src/generated/projectFiles.ts`, test a task, and commit.
+`npm run sync:tasks` clones a remote framework instead
+(`CALT_REPO_URL=<url> npm run sync:tasks`).
 
-The engine pin lives in `project-files/requirements.txt` and `project-files/pyproject.toml`.
-To upgrade `calt-x`, bump it there, run `npm run sync:tasks`, and test a task before shipping.
+The engine source lives in `project-files/pyproject.toml` (currently a git branch,
+not a pinned release). See **[MAINTAINING.md](MAINTAINING.md)** for the switch-back
+procedure.
 
 See [MAINTAINING.md](MAINTAINING.md) for the full maintenance workflow and
 [AI_CONTEXT.md](AI_CONTEXT.md) for a deep architectural description.
@@ -84,13 +95,13 @@ at the repository subpath (`https://<user>.github.io/<repo>/`) without extra con
 ```
 site/
 ├── src/
-│   ├── components/      UI: steps/, layout/, ui/ primitives
-│   ├── lib/             codegen, zip, templates, stats, aiPrompt, tasks, preview
-│   ├── state/           wizard store (React context)
+│   ├── components/      steps/, layout/, ui/ + ConfigPreview, ErrorBoundary
+│   ├── lib/             codegen, zip, templates, stats, aiPrompt, tasks, projectReadme, utils
+│   ├── state/           wizard store (React context) + sessionStorage persistence
 │   ├── i18n/            en.ts / ja.ts dictionaries + provider
 │   ├── theme/           light/dark provider
 │   └── generated/       projectFiles.ts (AUTO-GENERATED snapshot, do not edit)
-├── project-files/       site-owned packaging: requirements.txt, pyproject.toml, install.*
+├── project-files/       site-owned packaging: pyproject.toml (no install scripts)
 ├── scripts/             bundle-tasks.mjs, sync-tasks.mjs
-└── public/
+└── public/              logo.png (favicon), theme-init.js (anti-FOUC)
 ```

@@ -1,4 +1,4 @@
-import { buildFiles, MODEL_PRESETS, type BuildConfig, type ModelPreset } from "./codegen";
+import { buildFiles, MODEL_PRESETS, type BuildConfig, type ModelPreset, type PosEmbedding } from "./codegen";
 import { TASK_FILES, COMMON_FILES } from "../generated/projectFiles";
 import { getTaskMeta } from "./tasks";
 import { buildProjectReadme } from "./projectReadme";
@@ -10,6 +10,7 @@ export interface ProjectSettings {
   numTest: number;
   epochs: number;
   modelPreset: ModelPreset;
+  posEmbedding: PosEmbedding;
   useWandb: boolean;
 }
 
@@ -38,6 +39,10 @@ function setYamlBool(content: string, key: string, value: boolean): string {
   );
 }
 
+function setYamlStr(content: string, key: string, value: string): string {
+  return content.replace(new RegExp(`^(\\s*${key}:\\s*)\\S+`, "m"), `$1${value}`);
+}
+
 /**
  * Apply the project-wide settings to an example task's toy config files.
  * Only touches experiments/toy/configs so other experiments keep their own
@@ -57,6 +62,7 @@ function applySettings(path: string, content: string, s: ProjectSettings): strin
     content = setYamlInt(content, "encoder_ffn_dim", m.ffn);
     content = setYamlInt(content, "decoder_ffn_dim", m.ffn);
     content = setYamlInt(content, "num_train_epochs", s.epochs);
+    content = setYamlStr(content, "use_positional_embedding", s.posEmbedding);
     content = setYamlBool(content, "no_wandb", !s.useWandb);
   }
   return content;

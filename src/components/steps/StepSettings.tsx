@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
 import { PackageOpen, ArrowLeft } from "lucide-react";
-import { useWizard, hasSelection, type TaskSettings } from "../../state/store";
+import { useWizard, hasSelection, customBuildConfig, type TaskSettings } from "../../state/store";
 import { useT } from "../../i18n";
-import { type ModelPreset } from "../../lib/codegen";
+import { type ModelPreset, type PosEmbedding } from "../../lib/codegen";
+import { ConfigPreview } from "../ConfigPreview";
 import { Card, SectionLabel } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Segmented } from "../ui/Segmented";
@@ -12,9 +13,9 @@ import { StepHeader, StepFooter } from "../layout/StepChrome";
 import { cn } from "../../lib/utils";
 
 const SIZE_PRESETS = [
-  { value: "quick", train: 1000, test: 200 },
-  { value: "balanced", train: 5000, test: 500 },
-  { value: "thorough", train: 20000, test: 2000 },
+  { value: "quick", train: 10000, test: 1000 },
+  { value: "balanced", train: 100000, test: 5000 },
+  { value: "thorough", train: 1000000, test: 10000 },
 ] as const;
 
 interface TaskSettingsFormProps {
@@ -36,6 +37,12 @@ function TaskSettingsForm({ settings, onChange }: TaskSettingsFormProps) {
     small: t.review.brainNoteSmall,
     medium: t.review.brainNoteMedium,
     large: t.review.brainNoteLarge,
+  };
+  const posEmbNote: Record<PosEmbedding, string> = {
+    generic: t.review.posEmbNoteGeneric,
+    sinusoidal: t.review.posEmbNoteSinusoidal,
+    rope: t.review.posEmbNoteRope,
+    none: t.review.posEmbNoteNone,
   };
 
   return (
@@ -72,6 +79,25 @@ function TaskSettingsForm({ settings, onChange }: TaskSettingsFormProps) {
           ]}
         />
         <p className="mt-2 text-xs text-ink-500">{brainNote[settings.modelPreset]}</p>
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center gap-1.5">
+          <span className="text-sm font-bold text-ink-800">{t.review.posEmb}</span>
+          <InfoHint title={t.review.posEmbInfoTitle}><p>{t.review.posEmbInfo}</p></InfoHint>
+        </div>
+        <Segmented
+          ariaLabel="position embedding"
+          value={settings.posEmbedding}
+          onChange={(v) => onChange({ posEmbedding: v as PosEmbedding })}
+          options={[
+            { value: "generic", label: t.review.posEmbLearned },
+            { value: "sinusoidal", label: t.review.posEmbSinusoidal },
+            { value: "rope", label: t.review.posEmbRope },
+            { value: "none", label: t.review.posEmbNone },
+          ]}
+        />
+        <p className="mt-2 text-xs text-ink-500">{posEmbNote[settings.posEmbedding]}</p>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
@@ -216,19 +242,28 @@ export function StepSettings() {
       )}
 
       {currentTab && (
-        <Card
-          role="tabpanel"
-          id={`settings-panel-${currentTab.id}`}
-          aria-labelledby={`settings-tab-${currentTab.id}`}
-          className="space-y-6 p-6 sm:p-7"
-        >
-          <TaskSettingsForm
-            key={currentTab.id}
-            taskId={currentTab.id}
-            settings={effectiveTaskSettings(currentTab.id)}
-            onChange={(p) => patchTaskSettings(currentTab.id, p)}
-          />
-        </Card>
+        <div className="grid gap-4 xl:grid-cols-[1fr_minmax(0,400px)] xl:items-start">
+          <Card
+            role="tabpanel"
+            id={`settings-panel-${currentTab.id}`}
+            aria-labelledby={`settings-tab-${currentTab.id}`}
+            className="space-y-6 p-6 sm:p-7"
+          >
+            <TaskSettingsForm
+              key={currentTab.id}
+              taskId={currentTab.id}
+              settings={effectiveTaskSettings(currentTab.id)}
+              onChange={(p) => patchTaskSettings(currentTab.id, p)}
+            />
+          </Card>
+          <div className="xl:sticky xl:top-20">
+            <ConfigPreview
+              taskId={currentTab.id}
+              settings={effectiveTaskSettings(currentTab.id)}
+              customConfig={currentTab.id === "__custom" ? customBuildConfig(config) : null}
+            />
+          </div>
+        </div>
       )}
 
       <p className="mt-4 text-xs text-ink-400">{t.settings.appliesNote}</p>

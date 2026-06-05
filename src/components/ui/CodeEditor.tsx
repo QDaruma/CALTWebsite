@@ -25,26 +25,32 @@ export function CodeEditor({
   onChange,
   language = "python",
   minHeight = 320,
+  maxHeight,
   className,
 }: {
   value: string;
   onChange: (v: string) => void;
   language?: string;
   minHeight?: number;
+  /** Cap the auto-grow; beyond this the editor scrolls internally (keeps pages compact). */
+  maxHeight?: number;
   className?: string;
 }) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
 
-  // Grow the editor to fit its content so the whole skeleton (including the
-  // __call__ definition) is visible immediately — no need to scroll or press
-  // Return to reveal lower lines. Runs on every value change and on mount.
+  // Grow the editor to fit its content so short skeletons (including __call__) are
+  // fully visible with no scrolling. Past `maxHeight` it stops growing and scrolls
+  // internally, so a long generator never blows up the page height.
   useLayoutEffect(() => {
     const ta = taRef.current;
     if (!ta) return;
     ta.style.height = "auto";
-    ta.style.height = `${Math.max(ta.scrollHeight, minHeight)}px`;
-  }, [value, minHeight]);
+    const fit = Math.max(ta.scrollHeight, minHeight);
+    const capped = maxHeight ? Math.min(fit, maxHeight) : fit;
+    ta.style.height = `${capped}px`;
+    ta.style.overflowY = maxHeight && fit > maxHeight ? "auto" : "hidden";
+  }, [value, minHeight, maxHeight]);
 
   const html = useMemo(() => {
     // Add a trailing space so a final newline still renders a highlighted line.
@@ -106,7 +112,7 @@ export function CodeEditor({
         onScroll={syncScroll}
         onKeyDown={onKeyDown}
         style={{ ...TEXT_STYLE, minHeight, caretColor: "rgb(var(--ink-800))" }}
-        className="scroll-thin relative block w-full resize-none overflow-x-auto overflow-y-hidden whitespace-pre bg-transparent p-4 text-transparent outline-none"
+        className="scroll-thin relative block w-full resize-none overflow-x-auto whitespace-pre bg-transparent p-4 text-transparent outline-none"
       />
     </div>
   );

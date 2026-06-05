@@ -134,6 +134,16 @@
   background-clip: content-box;
 }
 
+/* Briefly flashes a config line that just changed (ConfigPreview). */
+@keyframes line-flash {
+  0%, 12% { background-color: rgba(251, 191, 36, 0.55); }
+  100% { background-color: transparent; }
+}
+.line-flash { animation: line-flash 1.2s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .line-flash { animation: none; }
+}
+
 /* ---- Prism (theme-aware) ---- */
 pre[class*="language-"],
 code[class*="language-"] {

@@ -28,7 +28,7 @@ show:
   - OUTPUT : what the answer string is (e.g. "their greatest common divisor").
   - one concrete example pair, e.g.  "48 36"  ->  "12".
 Keep these assumptions (ranges, counts, allowed operations) as __init__ arguments
-with default values, so they are easy to change later — they map directly to the
+with default values, so they are easy to change later, and they map directly to the
 task's data.yaml config (the values under "problem_generator" are passed to
 __init__).
 

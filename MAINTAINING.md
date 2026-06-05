@@ -1,64 +1,84 @@
 # Maintaining the CALT Task Builder
 
 The site lets people download a ready-to-run CALT project. That download is built
-from two independent sources, and they go out of date in different ways.
+from independent sources that go out of date in different ways. See `AI_CONTEXT.md`
+for the full architecture and the multi-repo picture.
 
 ## What the download is made of
 
 1. **The engine `calt-x`** is not in the ZIP. The user installs it with conda:
-   they create a `calt-env` environment (SageMath from conda-forge) and then
-   `pip install calt-x==1.1.0` inside it. The generated `README.md` walks them
-   through this. The version is **pinned** in `project-files/pyproject.toml` and
-   in the README/UI install snippet, so a future `calt-x` release cannot silently
-   break the snapshot.
+   create a `calt-env` environment (SageMath from conda-forge) then
+   `pip install "git+https://github.com/HiroshiKERA/calt.git@feature/offline-pretokenization" omegaconf matplotlib click`.
+   ⚠️ It is installed from a **git branch**, not a released version, because the
+   bundled tasks import `calt.io.preprocess`, which only exists on that branch.
+   The generated `README.md` walks the user through it.
 
 2. **The task files** (generators, configs, `shared/`, scripts) are a frozen
-   snapshot captured into `src/generated/projectFiles.ts`. They come from the
-   framework repo and only change when you re-bundle.
+   snapshot in `src/generated/projectFiles.ts`, captured from **QDaruma/CALTCode**.
+   The six shown tasks are: parity, groebner_basis, integer_factorization,
+   gf17_addition, eigvec_3x3, polynomial_addition (border_basis is dropped).
 
-3. **The site-owned packaging** (`pyproject.toml`) lives in `project-files/`. The
-   `calt-x` pin lives here, not in the framework repo. There are no install
-   scripts: installation is conda-based and documented in the generated README.
+3. **Site-owned packaging** (`project-files/pyproject.toml`) carries the calt-x
+   source (currently the git branch). No install scripts — install is conda-based.
 
-Each downloaded project also gets a `CALT_SNAPSHOT.txt` recording the bundle date and
-the pinned engine version, so you can tell which snapshot a user received.
+Each project also gets `CALT_SNAPSHOT.txt` (bundle date + the calt-x source line).
 
 ## Refreshing the task snapshot (do this deliberately, then test)
 
+Primary path — bundle from a local CALTCode clone:
 ```bash
-npm run sync:tasks
+node scripts/bundle-tasks.mjs /path/to/CALTCode
+npm run build
 ```
+Then review the diff to `src/generated/projectFiles.ts`, test a task, and commit.
 
-This clones `HiroshiKERA/calt-codebase`, re-bundles `src/generated/projectFiles.ts`, and cleans
-up. Then review the diff, rebuild (`npm run build`), and commit.
+`npm run sync:tasks` clones a remote framework instead
+(`CALT_REPO_URL=<url> npm run sync:tasks` to override the source).
 
-- Source a different repo: `CALT_REPO_URL=<url> npm run sync:tasks`.
-- Bundle from a local checkout instead of cloning: `npm run bundle -- /path/to/CALTCode`.
+If upstream renamed YAML keys, re-check `applySettings` in `src/lib/zip.ts` — it
+patches `experiments/toy/configs/{data,train}.yaml` by key name
+(`num_train_samples`, `num_test_samples`, model dims, `num_train_epochs`,
+`use_positional_embedding`, `no_wandb`); a rename makes it silently no-op.
 
-If upstream changed the YAML config keys, double-check `applySettings` in
-`src/lib/zip.ts` still matches (it patches `experiments/toy/configs/data.yaml` and
-`train.yaml` by key name; a rename would make it silently no-op).
+## Adding a new example task (the 6 cards)
 
-## Bumping the pinned `calt-x` version
+1. Create the task folder in **CALTCode** (needs `core/generator.py` returning
+   `(str, str)`, `core/train.py`, and toy `configs/{data,train,lexer}.yaml`).
+2. Re-bundle (above).
+3. In `src/lib/tasks.ts` add the id to `ALLOWED_TASKS` and an entry in `META`
+   (icon, tagline, `needsSage`).
+4. Add `tasks.items[id]` (name + summary) to **both** `src/i18n/en.ts` and `ja.ts`.
 
-Only after testing one task end to end against the new engine.
+## Switching calt-x from the branch back to a release (future)
 
-1. Find the version you tested: `pip show calt-x` (look at `Version:`).
-2. Set it in `project-files/pyproject.toml` (e.g. `calt-x==1.1.0`). Also update the
-   pinned version shown in the README/UI install snippet (`src/lib/projectReadme.ts`
-   and `src/components/steps/StepReview.tsx`).
-3. Re-run `npm run sync:tasks` so the new pin is baked into the bundle.
-4. Run a full task locally: `generate.py`, `train.py`, `evaluate.py`.
-5. Rebuild and redeploy.
+Once `feature/offline-pretokenization` is merged and a `calt-x` with
+`calt.io.preprocess` is published:
+1. Test a task end to end against the released version (`pip show calt-x`).
+2. Replace the git URL with `calt-x==X.Y.Z` in **three** places:
+   `project-files/pyproject.toml`, `src/lib/projectReadme.ts`,
+   `src/components/steps/StepReview.tsx`.
+3. Re-bundle, rebuild, redeploy.
+
+> Related: the **Position embedding** "Learned" option writes the value `generic`
+> (the engine only accepts `generic/sinusoidal/rope/none` today). A fix making
+> "learned" a valid alias is on the encoder-only library branch; once published you
+> may switch the value back to `learned` if desired (it is the same thing).
 
 ## Quick check that a task still works
 
 ```bash
+conda activate calt-env
 cd <task>/experiments/toy/scripts
-python generate.py
-python train.py
-python evaluate.py
+python generate.py && python train.py --dryrun && python evaluate.py
 ```
 
-If it breaks only after a `calt-x` update, compare the installed version with the
-engine line in `CALT_SNAPSHOT.txt` of a known-good download.
+## Build / deploy
+
+```bash
+conda activate nodejs          # node is in a conda env on the dev box
+npm install
+npm run build                  # tsc --noEmit && vite build  -> dist/
+npm run dev                    # local preview at http://localhost:5173
+```
+Pushing to `main` triggers the GitHub Pages deploy (`.github/workflows/deploy.yml`).
+First-time Pages setup: Settings → Pages → Source = GitHub Actions.

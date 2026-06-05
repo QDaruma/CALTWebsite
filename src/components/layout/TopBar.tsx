@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { Github, Moon, RotateCcw, Sun } from "lucide-react";
 import logoUrl from "../../assets/logo.png";
 import { useWizard } from "../../state/store";
@@ -41,14 +42,17 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-ink-200/60 glass">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+      <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <button onClick={goHome} className="group flex items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand-400/60">
-          <img
+          <motion.img
             src={logoUrl}
             alt="CALT"
-            width={44}
-            height={44}
-            className="h-11 w-11 flex-shrink-0 rounded-full object-contain"
+            width={64}
+            height={64}
+            whileHover={{ scale: 1.1, rotate: [0, -6, 4, 0] }}
+            whileTap={{ scale: 0.92 }}
+            transition={{ type: "spring", stiffness: 380, damping: 12 }}
+            className="h-16 w-16 flex-shrink-0 object-contain"
           />
           <span className="flex flex-col items-start leading-none">
             <span className="text-[15px] font-extrabold tracking-tight text-ink-900">{t.nav.brand}</span>

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, Copy, Download, FileCode2, Pencil, Sigma, Sparkles } from "lucide-react";
+import { Check, ChevronDown, Copy, Download, FileCode2, Pencil, Sigma, Sparkles, Type } from "lucide-react";
 import { useWizard, hasSelection, customBuildConfig } from "../../state/store";
 import { useT } from "../../i18n";
 import { TASKS } from "../../lib/tasks";
 import { STATS } from "../../lib/stats";
-import { freshGeneratorCode } from "../../lib/codegen";
+import { freshGeneratorCode, defaultLexerConfig, type LexerConfig } from "../../lib/codegen";
+import { TEMPLATES, getTemplate } from "../../lib/templates";
 import { buildAiPrompt, buildMeasureAiPrompt } from "../../lib/aiPrompt";
 import { SectionLabel } from "../ui/Card";
 import { Badge } from "../ui/Badge";
@@ -197,6 +198,88 @@ function Measurements() {
   );
 }
 
+function Toggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "flex h-11 items-center justify-between gap-3 rounded-xl px-3.5 ring-1 outline-none transition focus-visible:ring-2 focus-visible:ring-brand-400/50",
+        checked ? "bg-brand-50/60 ring-brand-300" : "ring-ink-200 hover:ring-ink-300",
+      )}
+    >
+      <span className="text-sm text-ink-700">{label}</span>
+      <span className={cn("relative h-5 w-9 flex-shrink-0 rounded-full transition-colors", checked ? "bg-brand-600" : "bg-ink-300")}>
+        <span className={cn("absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform", checked ? "translate-x-4" : "translate-x-0")} />
+      </span>
+    </button>
+  );
+}
+
+// Edit lexer.yaml (the tokenizer vocabulary) so it matches the data the generator
+// actually produces — the symbols it uses, the number range, decimals, etc.
+function LexerEditor() {
+  const { config, patchCustom } = useWizard();
+  const t = useT();
+  const lx: LexerConfig = config.custom.lexer ?? defaultLexerConfig(config.custom.templateId, {});
+  const set = (p: Partial<LexerConfig>) => patchCustom({ lexer: { ...lx, ...p } });
+  const toInt = (s: string, fallback: number) => {
+    const n = parseInt(s, 10);
+    return Number.isNaN(n) ? fallback : n;
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm leading-relaxed text-ink-500">{t.lexer.intro}</p>
+      <Field label={t.lexer.symbols}>
+        <TextInput
+          value={lx.misc.join(" ")}
+          placeholder="+ - * ^ | x y"
+          onChange={(e) => set({ misc: e.target.value.split(/\s+/).filter(Boolean) })}
+        />
+        <p className="mt-1 text-xs text-ink-400">{t.lexer.symbolsHint}</p>
+      </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label={t.lexer.numMin}>
+          <TextInput inputMode="numeric" value={String(lx.numbersMin)} onChange={(e) => set({ numbersMin: toInt(e.target.value, lx.numbersMin) })} />
+        </Field>
+        <Field label={t.lexer.numMax}>
+          <TextInput inputMode="numeric" value={String(lx.numbersMax)} onChange={(e) => set({ numbersMax: toInt(e.target.value, lx.numbersMax) })} />
+        </Field>
+      </div>
+      <div>
+        <span className="mb-2 block text-sm font-bold text-ink-800">{t.lexer.digitGroup}</span>
+        <Segmented
+          ariaLabel="digit-group"
+          value={String(lx.digitGroup)}
+          onChange={(v) => set({ digitGroup: toInt(v, lx.digitGroup) })}
+          options={[
+            { value: "0", label: t.lexer.whole },
+            { value: "1", label: "1" },
+            { value: "2", label: "2" },
+            { value: "3", label: "3" },
+          ]}
+        />
+        <p className="mt-1.5 text-xs text-ink-400">{t.lexer.digitGroupHint}</p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Toggle label={t.lexer.attachSign} checked={lx.attachSign} onChange={(v) => set({ attachSign: v })} />
+        <Toggle label={t.lexer.allowFloat} checked={lx.allowFloat} onChange={(v) => set({ allowFloat: v })} />
+      </div>
+    </div>
+  );
+}
+
 function CustomBuilder() {
   const { config, patchCustom } = useWizard();
   const t = useT();
@@ -211,17 +294,80 @@ function CustomBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.custom.enabled]);
 
-  return (
-    <div className="mt-4 space-y-5 border-t border-ink-100 pt-5">
-      <Field label={t.tasks.customNameLabel}>
-        <TextInput
-          value={config.custom.name}
-          placeholder={t.tasks.customNamePlaceholder}
-          onChange={(e) => patchCustom({ name: e.target.value })}
-        />
-      </Field>
+  // Pick a starter template: seed the generator code from it and remember the
+  // choice (it also drives the generated lexer.yaml, deps and max sequence length).
+  const nameIsUntouched = (n: string) =>
+    !n || n === "My task" || TEMPLATES.some((tt) => tt.name === n);
+  const pickTemplate = (id: string) => {
+    const tpl = getTemplate(id);
+    const cfg = customBuildConfig({ ...config, custom: { ...config.custom, enabled: true, templateId: id } });
+    patchCustom({
+      enabled: true,
+      templateId: id,
+      code: cfg ? freshGeneratorCode(cfg) : null,
+      lexer: defaultLexerConfig(id, {}),
+      ...(nameIsUntouched(config.custom.name) ? { name: id === "custom" ? "My task" : tpl.name } : {}),
+    });
+  };
 
-      <div className="space-y-4">
+  return (
+    <div className="mt-4 space-y-4 border-t border-ink-100 pt-4">
+      {/* Starter template + task name share one compact row on wider screens. */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)] lg:items-start">
+        <div>
+          <SectionLabel>{t.tasks.startFrom}</SectionLabel>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {TEMPLATES.map((tpl) => {
+              const active = config.custom.templateId === tpl.id;
+              return (
+                <button
+                  key={tpl.id}
+                  onClick={() => pickTemplate(tpl.id)}
+                  aria-pressed={active}
+                  className={cn(
+                    "flex items-start gap-2.5 rounded-xl p-2.5 text-left ring-1 outline-none transition focus-visible:ring-2 focus-visible:ring-brand-400/60",
+                    active ? "bg-brand-50/60 ring-brand-300" : "ring-ink-200 hover:ring-ink-300",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors",
+                      active ? "bg-brand-600 text-white" : "bg-ink-100 text-ink-500",
+                    )}
+                  >
+                    <Icon name={tpl.icon} size={16} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-1.5 text-sm font-semibold text-ink-800">
+                      {tpl.name}
+                      {tpl.extraDeps?.length ? (
+                        <Badge tone="amber">needs {tpl.extraDeps.join(", ")}</Badge>
+                      ) : tpl.requiresSage ? (
+                        <Badge tone="amber">{t.tasks.needsSage}</Badge>
+                      ) : null}
+                    </span>
+                    <span className="block text-xs leading-snug text-ink-500">{tpl.beginnerSummary}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <Field label={t.tasks.customNameLabel}>
+          <TextInput
+            value={config.custom.name}
+            placeholder={t.tasks.customNamePlaceholder}
+            onChange={(e) => patchCustom({ name: e.target.value })}
+          />
+          <p className="mt-1.5 hidden text-xs leading-snug text-ink-400 lg:block">
+            {t.tasks.buildOwnDesc}
+          </p>
+        </Field>
+      </div>
+
+      {/* Authoring area: the code/AI editor is capped so it never blows up the page. */}
+      <div className="space-y-3">
         <Segmented
           ariaLabel="recipe-mode"
           value={mode}
@@ -235,23 +381,43 @@ function CustomBuilder() {
           <AiPanel />
         ) : (
           <>
-            <CodeEditor value={config.custom.code ?? ""} onChange={(v) => patchCustom({ code: v })} minHeight={340} />
-            <p className="text-xs text-ink-400">{t.data.recipeNote}</p>
-            <p className="flex items-center gap-1.5 text-xs text-ink-400">
-              <FileCode2 size={13} className="flex-shrink-0 text-brand-500" /> {t.data.editsGenerator}
+            <CodeEditor
+              value={config.custom.code ?? ""}
+              onChange={(v) => patchCustom({ code: v })}
+              minHeight={280}
+              maxHeight={440}
+            />
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-400">
+              <span className="inline-flex items-center gap-1.5">
+                <FileCode2 size={13} className="flex-shrink-0 text-brand-500" /> {t.data.editsGenerator}
+              </span>
+              <span className="text-ink-300">·</span>
+              <span>{t.data.recipeNote}</span>
             </p>
           </>
         )}
       </div>
 
-      <Disclosure
-        icon={<Sigma size={16} className="text-brand-600" />}
-        title={t.tasks.measurements}
-        hint={<span className="text-xs font-normal text-ink-400">{t.review.optional}</span>}
-      >
-        <p className="mb-3 text-sm text-ink-500">{t.tasks.measurementsHint}</p>
-        <Measurements />
-      </Disclosure>
+      {/* Optional / advanced — collapsed by default so they don't add scroll. */}
+      <div className="space-y-2.5">
+        <SectionLabel>{t.tasks.optionsLabel}</SectionLabel>
+        <Disclosure
+          icon={<Type size={16} className="text-brand-600" />}
+          title={t.tasks.tokenizer}
+          hint={<span className="text-xs font-normal text-ink-400">{t.review.optional}</span>}
+        >
+          <LexerEditor />
+        </Disclosure>
+
+        <Disclosure
+          icon={<Sigma size={16} className="text-brand-600" />}
+          title={t.tasks.measurements}
+          hint={<span className="text-xs font-normal text-ink-400">{t.review.optional}</span>}
+        >
+          <p className="mb-3 text-sm text-ink-500">{t.tasks.measurementsHint}</p>
+          <Measurements />
+        </Disclosure>
+      </div>
     </div>
   );
 }

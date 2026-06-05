@@ -36,7 +36,7 @@ You run it with a few copy-paste commands. No need to write any code yourself.
 
 Installation uses **conda** (Miniforge or Anaconda). This is the setup the tasks
 were tested with: one environment, called \`calt-env\`, that contains SageMath,
-PyTorch and the CALT engine together — so every task works, including the
+PyTorch and the CALT engine together, so every task works, including the
 polynomial ones.
 
 > Don't have conda yet? Install **Miniforge** first:
@@ -52,8 +52,12 @@ conda create -n calt-env -c conda-forge sage python=3.12 -y
 conda activate calt-env
 
 # 3. Install the CALT engine and helpers
-pip install calt-x==1.1.0 omegaconf matplotlib click
+pip install "git+https://github.com/HiroshiKERA/calt.git@feature/offline-pretokenization" omegaconf matplotlib click
 \`\`\`
+
+> **Note**: the engine is currently installed from the \`offline-pretokenization\`
+> branch (it adds the offline pre-tokenization the tasks rely on). Once that lands
+> in a published release this becomes a plain \`pip install calt-x\`.
 
 Check it worked:
 

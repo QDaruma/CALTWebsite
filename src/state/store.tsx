@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { type BuildConfig, type ModelPreset } from "../lib/codegen";
+import { type BuildConfig, type LexerConfig, type ModelPreset, type PosEmbedding } from "../lib/codegen";
 import { defaultSelectedStats } from "../lib/stats";
 
 // Persist the in-progress wizard to sessionStorage so a refresh (or accidental
@@ -12,6 +12,7 @@ export interface TaskSettings {
   numTest: number;
   epochs: number;
   modelPreset: ModelPreset;
+  posEmbedding: PosEmbedding;
   useWandb: boolean;
 }
 
@@ -31,7 +32,11 @@ export const LAST_STEP = 3;
 export interface CustomTask {
   enabled: boolean;
   name: string;
+  /** Starter template the generator code was seeded from (templates.ts id). */
+  templateId: string;
   code: string | null;
+  /** User edits to lexer.yaml (tokenizer); null = use the template default. */
+  lexer: LexerConfig | null;
   selectedStats: string[];
   /** Raw Python lines for custom measurements, injected into instance_stats(). */
   metricsCode: string | null;
@@ -45,6 +50,7 @@ export interface WizardConfig {
   numTest: number;
   epochs: number;
   modelPreset: ModelPreset;
+  posEmbedding: PosEmbedding;
   useWandb: boolean;
   downloadMode: "project" | "tasks";
   /** Per-task overrides; merged with global defaults at download time. */
@@ -57,14 +63,17 @@ const defaultConfig: WizardConfig = {
   custom: {
     enabled: false,
     name: "My task",
+    templateId: "custom",
     code: null,
+    lexer: null,
     selectedStats: defaultSelectedStats(),
     metricsCode: null,
   },
-  numTrain: 5000,
-  numTest: 500,
-  epochs: 30,
+  numTrain: 100000,
+  numTest: 5000,
+  epochs: 100,
   modelPreset: "small",
+  posEmbedding: "generic",
   useWandb: false,
   downloadMode: "project",
   perTaskSettings: {},
@@ -157,6 +166,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         numTest: config.numTest,
         epochs: config.epochs,
         modelPreset: config.modelPreset,
+        posEmbedding: config.posEmbedding,
         useWandb: config.useWandb,
         ...config.perTaskSettings[taskId],
       }),
@@ -194,21 +204,24 @@ export function customBuildConfig(c: WizardConfig): BuildConfig | null {
     numTest: c.numTest,
     epochs: c.epochs,
     modelPreset: c.modelPreset,
+    posEmbedding: c.posEmbedding,
     useWandb: c.useWandb,
     ...c.perTaskSettings["__custom"],
   };
   return {
     taskName: c.custom.name || "my_task",
     description: "",
-    templateId: "custom",
+    templateId: c.custom.templateId || "custom",
     paramValues: {},
     customGeneratorCode: c.custom.code,
     selectedStats: c.custom.selectedStats,
     metricsCode: c.custom.metricsCode,
+    lexerOverride: c.custom.lexer,
     numTrain: s.numTrain,
     numTest: s.numTest,
     epochs: s.epochs,
     modelPreset: s.modelPreset,
+    posEmbedding: s.posEmbedding,
     useWandb: s.useWandb,
   };
 }

@@ -2,202 +2,221 @@
 
 A complete description of this repository for an AI assistant or a new contributor.
 Read this before changing anything. It explains what the app does, how it is built,
-the data flow end to end, how to update it, and the non-obvious rules.
+the data flow end to end, how to update it, the broader multi-repo project, the
+strategic decisions taken, and the non-obvious rules.
 
 ## 1. What this is
 
 The **CALT Task Builder** is a static, client-side web app. It lets a non-technical
 person assemble a ready-to-run **CALT** project and download it as a ZIP. CALT
 ("Computer Algebra with Transformer") is a separate Python research framework that
-trains small Transformer models on algebraic tasks.
+trains small Transformer models on algebraic tasks (paper: arXiv 2506.08600).
 
 Nothing runs on a server. All project generation and ZIP packaging happen in the
 browser. The app never uploads anything.
 
 Stack: React 18, Vite, TypeScript, Tailwind CSS, Framer Motion (animation),
-Radix UI (accessible popovers/tooltips), JSZip (ZIP creation), lucide-react (icons),
-Prism (code highlighting).
+Radix UI (accessible popovers/tooltips), JSZip (lazy-loaded ZIP creation),
+lucide-react (icons), Prism (code highlighting), self-hosted Inter via @fontsource.
 
-## 2. The two content layers (important mental model)
+## 2. The three repos (essential mental model)
 
-What a user downloads is assembled from two distinct sources:
+This website is one of **three** coordinated repos. A remote contributor must know
+all three:
 
-1. **Framework content** lives in the separate repo
-   `https://github.com/HiroshiKERA/calt-codebase`: the task folders (`parity/`,
-   `groebner_basis/`, `border_basis/`) and the shared library (`shared/`). This app
-   does not contain that code as source. It embeds a **snapshot** of it.
+| Repo | Role |
+|---|---|
+| **QDaruma/CALTWebsite** (this) | The static builder site. Bundles a snapshot of task code and produces downloadable projects. |
+| **QDaruma/CALTCode** | The experiment template: the actual **task folders** (`parity/`, `groebner_basis/`, `integer_factorization/`, `gf17_addition/`, `eigvec_3x3/`, `polynomial_addition/`) + `shared/`. The site bundles a snapshot of this. |
+| **HiroshiKERA/calt** (the professor's library; pip package `calt-x`) | The engine: `DatasetPipeline`, `IOPipeline`, `ModelPipeline`, `TrainerPipeline`, the Transformer model, tokenizer, positional embeddings. The downloaded projects install this. |
 
-2. **Site-owned packaging** lives here in `project-files/`: `pyproject.toml`. It
-   wraps the framework into a runnable project and carries the pinned `calt-x`
-   version. There are no install scripts — installation is conda-based and
-   documented in the generated README.
+What a user downloads is assembled from two sources baked into
+`src/generated/projectFiles.ts`:
 
-3. **The engine `calt-x`** is in neither: the user installs it with conda (a
-   `calt-env` environment with SageMath from conda-forge, then `pip install
-   calt-x`). It is pinned (see `project-files/pyproject.toml`) so a future release
-   cannot silently break the snapshot.
+1. **Framework content** — task folders + `shared/`, snapshotted from **CALTCode**
+   (not from the professor's calt-codebase: we bundle from our QDaruma/CALTCode).
+2. **Site-owned packaging** — `project-files/pyproject.toml` (the only packaging
+   file; there are no install scripts — installation is conda-based, documented in
+   the generated README).
 
-The snapshot of (1) + (2) is baked into `src/generated/projectFiles.ts` by a build
-script. That generated file is what the browser actually ships.
+3. **The engine `calt-x`** is in neither: the user installs it with conda + pip.
+   ⚠️ **Strategy / important:** it is currently installed from a **git branch**, not
+   a released version:
+   `pip install "git+https://github.com/HiroshiKERA/calt.git@feature/offline-pretokenization"`.
+   Reason: the bundled tasks import `calt.io.preprocess` (offline pre-tokenization),
+   which only exists on that branch, not in the public `calt-x==1.1.0`. When that
+   branch is merged/released, switch the install back to a pinned `calt-x` (see §11).
 
 ## 3. Directory map
 
 ```
 site/
+├── index.html               Has SEO/OG/JSON-LD meta, a CSP, and loads public/theme-init.js
+├── public/
+│   ├── logo.png             Favicon (transparent, 64×64)
+│   └── theme-init.js        Sets theme + lang before paint (anti-FOUC). Allowed by the CSP hash/self.
 ├── src/
-│   ├── App.tsx                 Routes the current step to a screen, animates transitions
-│   ├── main.tsx                React entry; wraps providers (theme, i18n, wizard)
-│   ├── index.css               Design tokens (CSS variables, light + .dark sets)
+│   ├── App.tsx              Routes the current step to a screen; wraps content in <main>; skip-link
+│   ├── main.tsx             React entry; ErrorBoundary + MotionConfig + providers; imports Inter
+│   ├── index.css            Design tokens (CSS variables, light + .dark); reduced-motion
 │   ├── components/
-│   │   ├── steps/              StepWelcome, StepTasks, StepSettings, StepReview
-│   │   ├── layout/             TopBar, StepRail (+ MobileProgress), BuilderShell, StepChrome
-│   │   └── ui/                 Button, Card, Badge, Segmented, Disclosure, InfoHint,
-│   │                           Tooltip, controls (Field/inputs/Select/NumberStepper),
-│   │                           CodeEditor, CodeBlock, Confetti, Icon
+│   │   ├── steps/           StepWelcome, StepTasks, StepSettings, StepReview
+│   │   ├── layout/          TopBar, StepRail (+ MobileProgress), BuilderShell, StepChrome
+│   │   ├── ui/              Button, Card, Badge, Segmented, Disclosure, InfoHint, Tooltip,
+│   │   │                    controls (Field/inputs/NumberStepper), CodeEditor, Confetti
+│   │   ├── ConfigPreview.tsx   Live train.yaml/data.yaml/lexer.yaml preview with highlighting
+│   │   ├── ErrorBoundary.tsx   Friendly recovery screen instead of a blank page
+│   │   ├── CodeBlock.tsx / Icon.tsx
 │   ├── lib/
-│   │   ├── tasks.ts            Registry of ready-made tasks (filter + display metadata)
-│   │   ├── codegen.ts          Builds the custom task's files from a BuildConfig
-│   │   ├── zip.ts              Assembles the file map + ZIP; patches task configs
-│   │   ├── templates.ts        Generator presets for the custom task
-│   │   ├── stats.ts            Preset per-sample measurements (STATS)
-│   │   ├── aiPrompt.ts         Builds copy-paste AI prompts (generator + measurements)
-│   │   ├── preview.ts          JS mirrors of presets for the in-UI sample preview
-│   │   ├── projectReadme.ts    The README generated inside the downloaded project
-│   │   └── utils.ts            snake_case, identifier checks, downloadBlob, cn
-│   ├── state/store.tsx         The wizard state machine (React context)
-│   ├── i18n/                   index.tsx provider + en.ts / ja.ts dictionaries
-│   ├── theme/ThemeProvider.tsx Light/dark, toggles the `dark` class, persisted
+│   │   ├── tasks.ts         Ready-made task registry (ALLOWED_TASKS filter + display metadata)
+│   │   ├── codegen.ts       Custom-task file generation; LexerConfig + PosEmbedding types
+│   │   ├── zip.ts           File map + ZIP (lazy JSZip); applySettings patches task configs
+│   │   ├── templates.ts     Build-your-own starter templates (custom/gcd/integer_factorization/pca)
+│   │   ├── stats.ts         Preset per-sample measurements (STATS)
+│   │   ├── aiPrompt.ts      Copy-paste AI prompts (generator + measurements)
+│   │   ├── projectReadme.ts The README generated inside the downloaded project (conda install)
+│   │   └── utils.ts         snake_case, identifier checks, downloadBlob, cn
+│   ├── state/store.tsx      Wizard state machine (React context) + sessionStorage persistence
+│   ├── i18n/                index.tsx provider + en.ts / ja.ts dictionaries
+│   ├── theme/ThemeProvider.tsx   Light/dark, toggles the `dark` class, persisted
 │   └── generated/projectFiles.ts   AUTO-GENERATED snapshot. Never edit by hand.
-├── project-files/              Site-owned packaging (see layer 2 above)
+├── project-files/pyproject.toml    Site-owned packaging (calt-x source; currently the git branch)
 ├── scripts/
-│   ├── bundle-tasks.mjs        Builds projectFiles.ts from a framework path + project-files/
-│   └── sync-tasks.mjs          Clones CALTCode then runs the bundler
-├── README.md                   Human-facing overview
-├── MAINTAINING.md              Refresh + version-bump workflow
-└── AI_CONTEXT.md               This file
+│   ├── bundle-tasks.mjs     Builds projectFiles.ts from a framework path + project-files/
+│   └── sync-tasks.mjs       Clones the framework then runs the bundler
+├── README.md / MAINTAINING.md / AI_CONTEXT.md
 ```
+There is no `preview.ts`. JSZip is imported dynamically (only at download).
 
-## 4. The wizard state (`src/state/store.tsx`)
+## 4. The wizard (4 steps) and state (`src/state/store.tsx`)
 
-`WizardConfig` is the single source of truth:
+Steps: 0 = Welcome, 1 = Tasks, 2 = Settings, 3 = Finish.
 
-- `projectName`: names the downloaded folder/ZIP.
-- `selectedTasks: string[]`: ids of ready-made tasks chosen.
-- `custom`: the build-your-own task: `{ enabled, name, code, selectedStats, metricsCode }`.
-  `code` is the generator Python; `metricsCode` is raw Python lines for custom
-  measurements. Both may be null (defaults are generated).
-- Global defaults `numTrain, numTest, epochs, modelPreset, useWandb`.
-- `perTaskSettings: Record<taskId, Partial<TaskSettings>>`: per-task overrides. The
-  custom task uses the key `"__custom"`.
-- `downloadMode: "project" | "tasks"`.
+`WizardConfig` is the single source of truth, **persisted to sessionStorage** (a
+refresh keeps your choices; a new tab starts clean):
 
-Steps: 0 = welcome, 1 = Tasks, 2 = Settings, 3 = Finish (`BUILDER_STEPS`, `LAST_STEP`).
+- `projectName`, `selectedTasks: string[]`, `downloadMode: "project" | "tasks"`.
+- `custom`: the build-your-own task:
+  `{ enabled, name, templateId, code, lexer, selectedStats, metricsCode }`.
+  - `templateId`: which starter template the code was seeded from (templates.ts).
+  - `code`: the generator Python (null → seeded from the template).
+  - `lexer: LexerConfig | null`: user edits to the tokenizer (lexer.yaml); null → template default.
+  - `metricsCode`: raw Python lines injected into `instance_stats`.
+- Global defaults `numTrain, numTest, epochs, modelPreset, posEmbedding, useWandb`.
+- `perTaskSettings: Record<taskId, Partial<TaskSettings>>` (custom uses key `"__custom"`).
 
-Helpers:
-- `effectiveTaskSettings(taskId)` = global defaults merged with `perTaskSettings[taskId]`.
-- `customBuildConfig(config)` = a `BuildConfig` for the custom task (or null), merging
-  `perTaskSettings["__custom"]`.
-- `hasSelection(config)` = at least one ready-made task or the custom task.
+Helpers: `effectiveTaskSettings`, `customBuildConfig`, `hasSelection`. The logo
+returns to step 0 **without** clearing; "Start over" resets (with a confirm).
 
-## 5. Ready-made tasks (`src/lib/tasks.ts`)
+## 5. Ready-made tasks (`src/lib/tasks.ts`) — the 6 example cards
 
-`BUNDLED_TASKS` comes from the generated snapshot. `ALLOWED_TASKS` whitelists the
-three tasks shown in the UI (`parity`, `groebner_basis`, `border_basis`). `TASKS`
-is the filtered list with display metadata (`icon`, `tagline`, `needsSage`). Display
-names and summaries come from i18n (`tasks.items[id]`), not from here.
+`BUNDLED_TASKS` comes from the snapshot. `ALLOWED_TASKS` whitelists the **six** shown:
+`parity, groebner_basis, integer_factorization, gf17_addition, eigvec_3x3,
+polynomial_addition`. `border_basis` is intentionally **dropped** (close to Gröbner,
+less popular — professor's request). The four arithmetic/matrix/poly tasks are
+adaptations of the official calt-codebase `examples/`. `META` holds icon/tagline/
+needsSage; names+summaries come from i18n (`tasks.items[id]`).
 
-## 6. The download pipeline (`src/lib/zip.ts`)
+## 6. Download pipeline (`src/lib/zip.ts`) + live preview
 
-`ProjectSpec` is built in `StepReview` from the wizard config. `projectFileMap(spec)`
-produces a `path -> content` map:
+`projectFileMap(spec)` produces a `path -> content` map:
+- ready-made task → `TASK_FILES[id]` patched by `applySettings`.
+- custom task → `buildFiles(customConfig)` from `codegen.ts`.
+- `"project"` mode also adds `COMMON_FILES` (shared/ + pyproject + snapshot stamp)
+  and a generated root `README.md` (conda install instructions).
 
-- For each selected ready-made task, it copies `TASK_FILES[id]` from the snapshot,
-  running each file through `applySettings(path, content, effectiveSettings)`.
-- For the custom task, it calls `buildFiles(customConfig)` from `codegen.ts`.
-- In `"project"` mode it also adds `COMMON_FILES` (shared/ + `pyproject.toml` + the
-  snapshot stamp) and a freshly generated root `README.md`. (wandb needs no special
-  handling: it ships as a calt-x dependency, so the conda install already covers it.)
-
-`applySettings` only touches `experiments/toy/configs/`:
+`applySettings` patches `experiments/toy/configs/`:
 - `data.yaml`: `num_train_samples`, `num_test_samples`.
-- `train.yaml`: the model block from `MODEL_PRESETS` (layers, heads, d_model, ffn),
-  `num_train_epochs`, and `no_wandb` (the inverse of the logging toggle).
+- `train.yaml`: model block (`MODEL_PRESETS`), `num_train_epochs`,
+  **`use_positional_embedding`** (string, via `setYamlStr`), and `no_wandb`.
 
-It edits YAML by line-anchored regex, so it depends on those exact keys existing in
-the bundled toy configs. If the framework renames them, patching silently no-ops.
-Re-verify after a `sync:tasks` if upstream changed config shape.
+**ConfigPreview** (`src/components/ConfigPreview.tsx`) reuses `projectFileMap` for a
+single task to show the **real** generated `train.yaml`/`data.yaml`/`lexer.yaml` in
+Step 2, highlighting the lines the controls edit. This is the "train.yaml aside +
+which parts are edited" feature.
 
-`buildProjectZip(spec)` turns the file map into a ZIP blob with JSZip.
+## 7. Custom task: code, tokenizer, measurements (`codegen.ts`, `templates.ts`)
 
-## 7. The custom task generator (`src/lib/codegen.ts`)
+`buildFiles(cfg: BuildConfig)` emits a full task folder (core/*.py, configs, scripts).
+- **Templates** (`templates.ts`): `custom` (blank), `gcd`, `integer_factorization`,
+  `pca`. A picker in StepTasks seeds `code` + `lexer` + deps from the chosen template.
+- **Tokenizer editor** (`LexerEditor` in StepTasks): edits `LexerConfig`
+  (numbers range, misc symbols, digit_group, attach_sign, allow_float) → written to
+  `lexer.yaml`. This is the "set lexer.yml to match the generator" feature.
+- **Measurements** (`metricsPy`): selected preset stats (`stats.ts`) + the user's
+  `metricsCode`, injected into `instance_stats`; provides `re`, `math`, `_ints`.
+- `MODEL_PRESETS` maps small/medium/large to encoder/decoder sizes.
+- `PosEmbedding` type = `generic | sinusoidal | rope | none` (the Settings selector;
+  label "Learned" maps to value `generic` — see §11 strategy note).
 
-`buildFiles(cfg: BuildConfig)` emits a full task folder mirroring the real layout:
-`core/{__init__,generator,formatter,parser,metrics,train}.py`,
-`experiments/toy/configs/{data,lexer,train}.yaml`, and
-`experiments/toy/scripts/{generate,train,evaluate}.py + run.sh`.
+## 8. Settings (Step 2)
 
-- `generator.py` is either the user's `customGeneratorCode`, or a template-generated
-  skeleton (`templates.ts`).
-- `metrics.py` (`metricsPy`) writes the selected preset stats (`stats.ts`) plus the
-  user's `metricsCode`, injected into `instance_stats(problem, answer)`. When custom
-  code is present it provides `re`, `math`, and an `_ints(text)` helper, which is
-  exactly what the measurement AI prompt promises.
+Dataset size presets: **10,000 / 100,000 / 1,000,000** train (professor's request).
+Model size (small/medium/large), training rounds (epochs — renamed from "Practice
+rounds"), **Position embedding** (Learned[=generic]/Sinusoidal/RoPE/None), and a
+Weights & Biases logging toggle. The ConfigPreview sits beside these.
 
-`MODEL_PRESETS` maps small/medium/large to encoder/decoder sizes.
+## 9. AI prompts, i18n, theming
 
-## 8. AI prompts (`src/lib/aiPrompt.ts`)
-
-Two builders generate copy-paste prompts so a non-coder can have any chatbot write
-correct code:
-- `buildAiPrompt(taskName, description)` for the data generator class.
-- `buildMeasureAiPrompt(description)` for measurement lines.
-Both encode the exact contract the output must satisfy, then the user pastes the
-result into the matching "Write code" editor.
-
-## 9. i18n and theming
-
-`src/i18n/en.ts` defines `Dict = typeof en`. `ja.ts` is typed as `Dict`, so a missing
-or renamed key is a **compile error**. All visible UI strings go through `useT()`;
-the generated Python and file contents stay English. `LanguageProvider` persists the
-choice and sets `<html lang>`.
-
-`ThemeProvider` toggles the `dark` class on `<html>`. Colors are CSS-variable tokens
-in `index.css` (`:root` light set, `.dark` set) wired into Tailwind, so components use
-semantic classes (`bg-surface`, `text-ink-900`, `ring-ink-200`) that flip automatically.
+- `aiPrompt.ts`: `buildAiPrompt` (generator) requires the user to state INPUT/OUTPUT
+  and assumptions (ranges) and exposes them as `__init__` args → data.yaml.
+- i18n: `Dict = typeof en`; `ja.ts` must stay key-for-key in sync (missing key =
+  compile error). UI strings via `useT()`; generated Python stays English.
+- Theme: CSS-variable tokens in `index.css` (`:root` / `.dark`); `theme-init.js`
+  sets the class before paint.
 
 ## 10. Bundling and updating (`scripts/`)
 
 `bundle-tasks.mjs` regenerates `src/generated/projectFiles.ts`:
-- Framework path resolution order: first CLI arg, then `CALT_REPO` env, then `../..`.
-- Reads task folders (any folder with `core/generator.py`) and `shared/` from there.
-- Reads packaging files from `project-files/` (falling back to the framework).
-- Writes a `CALT_SNAPSHOT.txt` stamp (bundle date + the `calt-x` pin) into the project.
-- Pure Node, no native deps, safe on any platform.
+- Reads task folders (any with `core/generator.py`) + `shared/` from a framework path.
+- Reads `pyproject.toml` from `project-files/`.
+- Writes `CALT_SNAPSHOT.txt` (date + the calt-x source line) into the project.
 
-`sync-tasks.mjs` (`npm run sync:tasks`) shallow-clones CALTCode to a temp dir, runs the
-bundler against it, and cleans up. Override the source with `CALT_REPO_URL`.
+Re-bundle from the **local** CALTCode clone (this is how the 6 tasks got in):
+```bash
+node scripts/bundle-tasks.mjs /home/<you>/CALTCode
+npm run build
+```
+`sync-tasks.mjs` (`npm run sync:tasks`) clones a remote framework instead.
 
-To refresh ready-made tasks: `npm run sync:tasks`, review the diff, rebuild, commit.
-To upgrade the engine: bump `calt-x==X.Y.Z` in `project-files/pyproject.toml` (and the
-install snippet in `src/lib/projectReadme.ts` + `src/components/steps/StepReview.tsx`),
-re-run `sync:tasks`, test a task, then ship.
+## 11. Project strategy, decisions, and OPEN loose ends (read this)
 
-## 11. How to extend
+- **Install = git branch, not a release.** `project-files/pyproject.toml`,
+  `projectReadme.ts`, and `StepReview.tsx` install calt from
+  `feature/offline-pretokenization` because the tasks need `calt.io.preprocess`.
+  TODO: switch to a pinned `calt-x==X.Y.Z` once merged/published.
+- **Position embedding value = `generic`, label "Learned".** The engine's
+  `get_positional_embedding` historically accepted only `generic/sinusoidal/rope/none`
+  ("learned" raised). A fix making "learned" an alias lives on the **encoder-only
+  library branch** (not yet published), so the site writes the safe value `generic`
+  today. Once the fix ships, "learned" can be used interchangeably.
+- **Encoder-only model work (library).** Quentin took over the professor's
+  "encoder-only model for parity / custom input embedding / position embedding /
+  compressing layer" requests. The encoder-only architecture + the "learned" fix are
+  implemented on a calt branch and handed off in **CALTCode branch
+  `feat/encoder-only-handoff`** (`handoff/` folder: doc + `.patch` + overfit test).
+  Still open (await teammate Maxime): custom input embedding (xVal-style?) and
+  "compressing layer in expanding layer" (ambiguous). Parity does not converge with a
+  one-shot encoder-only model — expected, parity needs chain-of-thought (paper ref [12]).
+- **Owned by the teammate, not the site:** post-evaluation analysis pipeline,
+  token/text/Sage visualization, and the W&B benchmarks.
 
-- **New ready-made task:** add it to CALTCode (needs `core/generator.py` and
-  `experiments/toy/configs/{data,train}.yaml`), run `npm run sync:tasks`, then add the
-  id to `ALLOWED_TASKS` and `META` in `tasks.ts` and to `tasks.items` in `en.ts`/`ja.ts`.
-- **New custom-generator preset:** add it in `templates.ts` (and a preview in `preview.ts`).
+## 12. How to extend
+
+- **New ready-made task:** add it to CALTCode (needs `core/generator.py` + toy
+  `configs/{data,train,lexer}.yaml`), re-bundle, then add the id to `ALLOWED_TASKS` +
+  `META` in `tasks.ts` and to `tasks.items` in `en.ts`/`ja.ts`.
+- **New build-your-own template:** add it in `templates.ts` (the picker shows it).
 - **New preset measurement:** add a `StatDef` in `stats.ts`.
-- **New UI string:** add it to `en.ts` and `ja.ts` (both, or it will not compile).
+- **New UI string:** add to `en.ts` AND `ja.ts` (both, or it won't compile).
 
-## 12. Non-obvious rules (do not trip on these)
+## 13. Non-obvious rules (do not trip on these)
 
-- `src/generated/projectFiles.ts` is generated. Never hand-edit it; change the source
-  and re-bundle.
+- `src/generated/projectFiles.ts` is generated — never hand-edit; change source + re-bundle.
 - `ja.ts` must stay key-for-key in sync with `en.ts`.
 - `applySettings` depends on the exact YAML keys in the bundled toy configs.
-- The custom task's per-task settings live under the `"__custom"` key and are merged
-  in `customBuildConfig`.
-- `calt-x` is intentionally pinned. Treat upgrades as a deliberate, tested step.
+- Per-task custom settings live under the `"__custom"` key.
+- The install currently targets a git branch (see §11); treat changing it as deliberate.
 - `base: "./"` in `vite.config.ts` keeps asset paths relative for subpath hosting.
+- Node isn't on the default PATH on the dev box; this project was built with a conda
+  `nodejs` env: `conda activate nodejs` then `npm run build` / `npm run dev`.

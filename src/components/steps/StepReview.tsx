@@ -33,6 +33,7 @@ export function StepReview() {
       numTest: config.numTest,
       epochs: config.epochs,
       modelPreset: config.modelPreset,
+      posEmbedding: config.posEmbedding,
       useWandb: config.useWandb,
     },
     perTaskSettings: config.perTaskSettings,
@@ -174,7 +175,7 @@ export function StepReview() {
                 language="bash"
                 filename="terminal"
                 maxHeight="160px"
-                code={`# One-time setup with conda (details in README.md)\nconda create -n calt-env -c conda-forge sage python=3.12 -y\nconda activate calt-env\npip install calt-x==1.1.0 omegaconf matplotlib click`}
+                code={`# One-time setup with conda (details in README.md)\nconda create -n calt-env -c conda-forge sage python=3.12 -y\nconda activate calt-env\npip install "git+https://github.com/HiroshiKERA/calt.git@feature/offline-pretokenization" omegaconf matplotlib click`}
               />
             </div>
           )}

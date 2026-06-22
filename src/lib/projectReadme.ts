@@ -52,10 +52,10 @@ conda create -n calt-env -c conda-forge sage python=3.12 -y
 conda activate calt-env
 
 # 3. Install the CALT engine and helpers
-pip install "git+https://github.com/HiroshiKERA/calt.git@feature/offline-pretokenization" omegaconf matplotlib click
+pip install "git+https://github.com/HiroshiKERA/calt.git@feature/custom-embeddings" matplotlib click
 \`\`\`
 
-> **Note**: the engine is currently installed from the \`offline-pretokenization\`
+> **Note**: the engine is currently installed from the \`custom-embeddings\`
 > branch (it adds the offline pre-tokenization the tasks rely on). Once that lands
 > in a published release this becomes a plain \`pip install calt-x\`.
 

@@ -24,9 +24,9 @@ export const STATS: StatDef[] = [
   {
     id: "input_length",
     label: "input_length",
-    friendlyLabel: "Question length",
+    friendlyLabel: "Problem length",
     description: "Number of space-separated tokens in the input.",
-    friendlyDescription: "How many pieces each question is made of.",
+    friendlyDescription: "How many pieces each problem is made of.",
     expr: "len(str(problem).split())",
     defaultOn: true,
   },
@@ -42,9 +42,9 @@ export const STATS: StatDef[] = [
   {
     id: "input_chars",
     label: "input_chars",
-    friendlyLabel: "Question size",
+    friendlyLabel: "Problem size",
     description: "Total number of characters in the input string.",
-    friendlyDescription: "How many characters long each question is.",
+    friendlyDescription: "How many characters long each problem is.",
     expr: "len(str(problem))",
   },
   {
@@ -60,7 +60,7 @@ export const STATS: StatDef[] = [
     label: "max_abs_value",
     friendlyLabel: "Biggest number",
     description: "Largest absolute integer appearing in the input (0 if none).",
-    friendlyDescription: "The largest number that appears in each question.",
+    friendlyDescription: "The largest number that appears in each problem.",
     expr: "max((abs(v) for v in _ints(problem)), default=0)",
     needsInts: true,
   },
@@ -69,7 +69,7 @@ export const STATS: StatDef[] = [
     label: "num_elements",
     friendlyLabel: "Number of parts",
     description: "How many '|'-separated parts the input has (useful for list inputs).",
-    friendlyDescription: "How many parts the question is split into (by the “|” symbol).",
+    friendlyDescription: "How many parts the problem is split into (by the “|” symbol).",
     expr: 'len(str(problem).split("|"))',
   },
 ];

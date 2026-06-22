@@ -85,7 +85,7 @@ export const TEMPLATES: Template[] = [
     name: "Start from scratch",
     icon: "Pencil",
     tagline: "write your own rule",
-    beginnerSummary: "Define your own question-and-answer rule from scratch.",
+    beginnerSummary: "Define your own problem-and-answer rule from scratch.",
     description:
       "A blank, working skeleton you fill in. Best if your task does not match the presets: you write the generator logic in the editor on the next step.",
     exampleInput: "1 2 3",

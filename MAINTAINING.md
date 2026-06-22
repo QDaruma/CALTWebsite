@@ -8,7 +8,8 @@ for the full architecture and the multi-repo picture.
 
 1. **The engine `calt-x`** is not in the ZIP. The user installs it with conda:
    create a `calt-env` environment (SageMath from conda-forge) then
-   `pip install "git+https://github.com/HiroshiKERA/calt.git@feature/offline-pretokenization" omegaconf matplotlib click`.
+   `pip install "git+https://github.com/HiroshiKERA/calt.git@feature/custom-embeddings" matplotlib click`
+   (omegaconf ships with calt-x, so it is not listed here).
    ⚠️ It is installed from a **git branch**, not a released version, because the
    bundled tasks import `calt.io.preprocess`, which only exists on that branch.
    The generated `README.md` walks the user through it.
@@ -51,7 +52,7 @@ patches `experiments/toy/configs/{data,train}.yaml` by key name
 
 ## Switching calt-x from the branch back to a release (future)
 
-Once `feature/offline-pretokenization` is merged and a `calt-x` with
+Once `feature/custom-embeddings` is merged and a `calt-x` with
 `calt.io.preprocess` is published:
 1. Test a task end to end against the released version (`pip show calt-x`).
 2. Replace the git URL with `calt-x==X.Y.Z` in **three** places:

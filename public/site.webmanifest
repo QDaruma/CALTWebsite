@@ -1,0 +1,19 @@
+{
+  "name": "CALT Task Builder",
+  "short_name": "CALT Builder",
+  "description": "Build a ready-to-run CALT project in your browser: pick algebraic tasks, tune settings, and download a complete project that trains a small Transformer.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fcfcfe",
+  "theme_color": "#5546e6",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "./logo.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

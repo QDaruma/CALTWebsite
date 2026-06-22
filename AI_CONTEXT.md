@@ -42,7 +42,7 @@ What a user downloads is assembled from two sources baked into
 3. **The engine `calt-x`** is in neither: the user installs it with conda + pip.
    ⚠️ **Strategy / important:** it is currently installed from a **git branch**, not
    a released version:
-   `pip install "git+https://github.com/HiroshiKERA/calt.git@feature/offline-pretokenization"`.
+   `pip install "git+https://github.com/HiroshiKERA/calt.git@feature/custom-embeddings"`.
    Reason: the bundled tasks import `calt.io.preprocess` (offline pre-tokenization),
    which only exists on that branch, not in the public `calt-x==1.1.0`. When that
    branch is merged/released, switch the install back to a pinned `calt-x` (see §11).
@@ -183,7 +183,7 @@ npm run build
 
 - **Install = git branch, not a release.** `project-files/pyproject.toml`,
   `projectReadme.ts`, and `StepReview.tsx` install calt from
-  `feature/offline-pretokenization` because the tasks need `calt.io.preprocess`.
+  `feature/custom-embeddings` because the tasks need `calt.io.preprocess`.
   TODO: switch to a pinned `calt-x==X.Y.Z` once merged/published.
 - **Position embedding value = `generic`, label "Learned".** The engine's
   `get_positional_embedding` historically accepted only `generic/sinusoidal/rope/none`

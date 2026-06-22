@@ -13,12 +13,12 @@ export interface TaskMeta {
 }
 
 const META: Record<string, Omit<TaskMeta, "id">> = {
-  parity: { icon: "ArrowLeftRight", tagline: "2 0 1  →  +1 / -1" },
-  groebner_basis: { icon: "Sigma", tagline: "f1 | f2  →  Gröbner basis", needsSage: true },
-  integer_factorization: { icon: "Binary", tagline: "2310  →  2 | 3 | 5 | 7 | 11" },
-  gf17_addition: { icon: "Hash", tagline: "5,9,3,4  →  5,14,0,4" },
+  parity: { icon: "Shuffle", tagline: "2 0 1  →  +1 / -1" },
+  groebner_basis: { icon: "text:G", tagline: "f1 | f2  →  Gröbner basis", needsSage: true },
+  integer_factorization: { icon: "Asterisk", tagline: "2310  →  2 | 3 | 5 | 7 | 11" },
+  gf17_addition: { icon: "Clock", tagline: "5,9,3,4  →  5,14,0,4" },
   eigvec_3x3: { icon: "Grid3x3", tagline: "3×3 matrix  →  eigenvector" },
-  polynomial_addition: { icon: "Plus", tagline: "p1 | p2 | …  →  running sums", needsSage: true },
+  polynomial_addition: { icon: "Plus", tagline: "p1 | p2 | …  →  p1 | p1+p2 | …", needsSage: true },
   // border_basis intentionally dropped: it is close to Gröbner bases and less
   // popular (per the maintainers' feedback).
 };

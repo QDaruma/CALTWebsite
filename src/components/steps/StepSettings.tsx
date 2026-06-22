@@ -10,6 +10,7 @@ import { Segmented } from "../ui/Segmented";
 import { NumberStepper } from "../ui/controls";
 import { InfoHint } from "../ui/InfoHint";
 import { StepHeader, StepFooter } from "../layout/StepChrome";
+import { StepDetails } from "../layout/StepDetails";
 import { cn } from "../../lib/utils";
 
 const SIZE_PRESETS = [
@@ -193,6 +194,7 @@ export function StepSettings() {
   return (
     <div>
       <StepHeader eyebrow={t.settings.eyebrow} title={t.settings.title} subtitle={t.settings.subtitle} />
+      <StepDetails text={t.details.settings} />
 
       {/* Tab bar: one per selected task */}
       {tabs.length > 1 && (

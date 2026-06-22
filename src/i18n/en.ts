@@ -40,10 +40,12 @@ export const en = {
   },
   tasks: {
     eyebrow: "Step 1",
-    title: "Choose what goes in your project",
+    title: "Define your task",
     subtitle:
-      "Pick one or more ready-made CALT tasks. Each one is complete and ready to run. You can also add a task of your own.",
-    chooseReal: "Example tasks",
+      "Define your own task, add ready-made example tasks, or both. Each example is complete and ready to run.",
+    chooseReal: "Add example tasks",
+    sageNote:
+      "Some tasks need SageMath, a free math toolkit. It comes bundled in the conda setup, so there's nothing extra to install.",
     selectAll: "Select all",
     clearAll: "Clear all",
     needsSage: "needs SageMath",
@@ -78,8 +80,8 @@ export const en = {
         summary: "Compute the border basis of a zero-dimensional polynomial ideal.",
       },
       integer_factorization: {
-        name: "Integer factorization",
-        summary: "Recover the prime numbers whose product makes a given integer.",
+        name: "Prime factor listing",
+        summary: "List the prime factors of a given integer.",
       },
       gf17_addition: {
         name: "Modular running sums",
@@ -90,13 +92,13 @@ export const en = {
         summary: "Find the main direction (top eigenvector) of a 3×3 symmetric matrix, on real-valued data.",
       },
       polynomial_addition: {
-        name: "Polynomial running sums",
-        summary: "Add several multivariate polynomials together, one at a time.",
+        name: "Polynomial addition",
+        summary: "Add a sequence of polynomials step by step (cumulative sums).",
       },
     } as Record<string, { name: string; summary: string }>,
   },
   data: {
-    recipeNote: "Keep a class with __call__(self, seed) that returns a (question, answer) pair of text.",
+    recipeNote: "Keep a class with __call__(self, seed) that returns a (problem, answer) pair of text.",
     editsGenerator: "This becomes core/generator.py in the task folder. Edit it there later for local tweaks.",
     editsMetrics: "These lines go into core/metrics.py (the instance_stats function).",
     editsLexer: "This becomes experiments/toy/configs/lexer.yaml. Edit it there later if your generator changes.",
@@ -125,25 +127,19 @@ export const en = {
   review: {
     eyebrow: "Step 3",
     title: "Download your project",
-    subtitle: "Choose what to download, take a look inside, then save your project.",
+    subtitle: "Take a look inside, then save your project.",
     empty: "No tasks selected yet. Go back and add at least one.",
-    dlMode: "What to download",
-    dlProject: "Full project",
-    dlProjectDesc: "Everything needed to run: shared code, config, and your chosen tasks.",
-    dlTasks: "Tasks only",
-    dlTasksDesc: "Just the task folders, to drop into an existing CALT project.",
-    included: "In your project",
     download: "Download",
     saved: "Saved. See “How to use it” below.",
     settings: "Custom task settings",
     optional: "optional",
-    examplesQ: "How many examples?",
+    examplesQ: "Training sample size",
     examplesInfoTitle: "Number of examples",
     examplesInfo:
       "More examples usually help the model learn better, but take longer to prepare and train. “Balanced” is a good default; use “Quick” to test the pipeline faster, or “Thorough” for the best results.",
     sizeQuick: "Quick",
     sizeBalanced: "Balanced",
-    sizeThorough: "Thorough",
+    sizeThorough: "Intense",
     brainQ: "Model size",
     brainInfoTitle: "Model size",
     brainInfo:
@@ -180,23 +176,21 @@ export const en = {
       "An optional online dashboard for tracking training (Weights & Biases). If you turn it on, it's added to your install. You'll just need a free account and to run “wandb login” once. Leave it off otherwise.",
     on: "On",
     off: "Off",
-    peek: "What's inside",
-    peekBody: "What you'll get in the download.",
-    insideTaskFolders: (n: number) => `${n} ready-to-run task folder${n === 1 ? "" : "s"}`,
-    insideShared: "Shared code and settings used by every task",
-    insideScripts: "A pinned pyproject.toml so the engine version stays reproducible",
-    insideReadme: "A README with copy-paste instructions",
-    insideTasksOnly: (n: number) =>
-      `${n} task folder${n === 1 ? "" : "s"} to drop into an existing CALT project`,
-    sageNote: "Some tasks need SageMath, a free math toolkit. It comes bundled in the conda environment below, so there is nothing extra to install.",
+    treeTitle: "What's inside",
+    treeBody: "The files in your download. Edit any of them later for local tweaks.",
+    treeNotes: {
+      core: "the task logic (generator, metrics)",
+      configs: "customized at Step 2",
+      scripts: "run these: generate, train, evaluate",
+      shared: "utilities shared by every task",
+    } as Record<string, string>,
     howToUse: "How to use it",
-    prereq: "To run it you'll need conda (Miniforge or Anaconda) and a terminal. No coding, just copy-paste the commands below.",
-    howUnzipProject: (proj: string) => `Unzip ${proj}.zip. It is a complete CALT project, ready to run.`,
-    howUnzipTasks: "Unzip the folders into the root of your existing CALT project.",
-    howInstall: "Install everything once with conda: open a terminal in the project folder and run the setup commands below (full details in README.md).",
-    howRun: "Open a terminal and, for each task, run:",
+    prereq: "You'll need conda and a terminal. Just copy-paste the commands below.",
+    howUnzipProject: (proj: string) => `Unzip ${proj}.zip (a complete CALT project).`,
+    howInstall: "Install everything once with conda (full details in README.md).",
+    howRun: "Then open a terminal and, for each task, run:",
+    setupLabel: "One-time setup commands",
     sTasks: "Tasks",
-    sMode: "Download",
     back: "Back",
   },
   lexer: {
@@ -213,7 +207,7 @@ export const en = {
     attachSign: "Attach sign to numbers",
     allowFloat: "Allow decimals (e.g. 0.71)",
     symbolsInfo:
-      "List every operator or letter that can appear in your questions or answers. Numbers are set separately below. Anything you forget becomes an “unknown” token the model can't read.",
+      "List every operator or letter that can appear in your problems or answers. Numbers are set separately below. Anything you forget becomes an “unknown” token the model can't read.",
     numMinInfo:
       "The smallest (most negative) whole number your data can contain. Set it to cover every value your generator can produce.",
     numMaxInfo:
@@ -229,7 +223,7 @@ export const en = {
   settings: {
     eyebrow: "Step 2",
     title: "Settings",
-    subtitle: "Fine-tune each task's training settings. The defaults work well, so only change them if you want to.",
+    subtitle: "Fine-tune each task's training settings. The defaults already work well.",
     appliesNote:
       "These are saved into each task's config when you download. To change them later, edit the files in experiments/toy/configs/ inside the task folder: data.yaml for the number of examples, train.yaml for the model size, training rounds, position embedding and logging, and lexer.yaml for the tokenizer vocabulary.",
     noTasks: "No tasks selected yet. Go back and pick at least one.",
@@ -238,8 +232,19 @@ export const en = {
     previewLexer: "Tokenizer vocabulary",
     previewFiles: "Config file",
   },
+  details: {
+    label: "Details",
+    learnMore: "Learn more in the CALT docs",
+    docsUrl: "https://hiroshikera.github.io/calt/",
+    tasks:
+      "A CALT task frames a math problem as a translation: an input string (the problem) maps to an output string (the answer). You define one instance generator that returns (problem, answer) pairs from a seed; the example cards are ready-made generators you can add as they are.",
+    settings:
+      "These controls set the dataset size, the Transformer model size, how many training rounds run, and how token positions are encoded. Each one is written into the task's data.yaml / train.yaml, shown live on the right.",
+    finish:
+      "Your download is a complete, runnable CALT project: one folder per task (generator, configs, scripts), shared utilities, a pinned pyproject.toml and a README. The workflow is generate → train → evaluate.",
+  },
   rail: { tasks: "Tasks", settings: "Settings", finish: "Finish" },
-  railSub: { tasks: "What to include", settings: "Data & model", finish: "Download" },
+  railSub: { tasks: "Define instance generator", settings: "Data, model & training", finish: "Download" },
   mobileStep: (n: number, total: number) => `Step ${n} of ${total}`,
   a11y: {
     decrease: "Decrease",
@@ -249,12 +254,12 @@ export const en = {
     settingsTabs: "Settings for each task",
   },
   stats: {
-    input_length: { label: "Question length", desc: "How many pieces each question is made of." },
+    input_length: { label: "Problem length", desc: "How many pieces each problem is made of." },
     output_length: { label: "Answer length", desc: "How many pieces each answer is made of." },
-    input_chars: { label: "Question size", desc: "How many characters long each question is." },
+    input_chars: { label: "Problem size", desc: "How many characters long each problem is." },
     output_chars: { label: "Answer size", desc: "How many characters long each answer is." },
-    max_abs_value: { label: "Biggest number", desc: "The largest number that appears in each question." },
-    num_elements: { label: "Number of parts", desc: "How many parts the question is split into (by the “|” symbol)." },
+    max_abs_value: { label: "Biggest number", desc: "The largest number that appears in each problem." },
+    num_elements: { label: "Number of parts", desc: "How many parts the problem is split into (by the “|” symbol)." },
   } as Record<string, { label: string; desc: string }>,
 };
 

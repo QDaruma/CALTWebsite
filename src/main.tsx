@@ -3,11 +3,13 @@ import ReactDOM from "react-dom/client";
 import { MotionConfig } from "framer-motion";
 // Self-hosted Inter (no external Google Fonts request — faster first paint + no
 // visitor IP sent to Google, so the "nothing leaves your browser" claim holds).
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/500.css";
-import "@fontsource/inter/600.css";
-import "@fontsource/inter/700.css";
-import "@fontsource/inter/800.css";
+// Latin subset only: the UI is English/Japanese (Japanese falls back to system
+// fonts), so cyrillic/greek/vietnamese subsets would be dead weight.
+import "@fontsource/inter/latin-400.css";
+import "@fontsource/inter/latin-500.css";
+import "@fontsource/inter/latin-600.css";
+import "@fontsource/inter/latin-700.css";
+import "@fontsource/inter/latin-800.css";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { WizardProvider } from "./state/store";

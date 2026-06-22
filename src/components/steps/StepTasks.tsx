@@ -16,7 +16,8 @@ import { InfoHint } from "../ui/InfoHint";
 import { Field, TextInput, TextArea } from "../ui/controls";
 import { Icon } from "../Icon";
 import { StepHeader, StepFooter } from "../layout/StepChrome";
-import { cn, downloadBlob, toSnakeCase } from "../../lib/utils";
+import { StepDetails } from "../layout/StepDetails";
+import { cn, downloadBlob, toSnakeCase, renameTaskInCode } from "../../lib/utils";
 
 function AiPanel() {
   const { config } = useWizard();
@@ -351,13 +352,33 @@ function CustomBuilder() {
     !n || n === "My task" || TEMPLATES.some((tt) => tt.name === n);
   const pickTemplate = (id: string) => {
     const tpl = getTemplate(id);
-    const cfg = customBuildConfig({ ...config, custom: { ...config.custom, enabled: true, templateId: id } });
+    // Resolve the effective name first, then seed the code from it, so the seeded
+    // class name matches the (possibly auto-updated) task name from the start.
+    const newName = nameIsUntouched(config.custom.name)
+      ? id === "custom"
+        ? "My task"
+        : tpl.name
+      : config.custom.name;
+    const cfg = customBuildConfig({
+      ...config,
+      custom: { ...config.custom, enabled: true, templateId: id, name: newName },
+    });
     patchCustom({
       enabled: true,
       templateId: id,
+      name: newName,
       code: cfg ? freshGeneratorCode(cfg) : null,
       lexer: defaultLexerConfig(id, {}),
-      ...(nameIsUntouched(config.custom.name) ? { name: id === "custom" ? "My task" : tpl.name } : {}),
+    });
+  };
+
+  // Renaming the task must keep the seeded generator code in sync: the class name
+  // is derived from the task name, and scripts/generate.py imports that name.
+  const renameTask = (newName: string) => {
+    const code = config.custom.code;
+    patchCustom({
+      name: newName,
+      ...(code ? { code: renameTaskInCode(code, config.custom.name, newName) } : {}),
     });
   };
   const activeTpl = getTemplate(config.custom.templateId);
@@ -403,7 +424,7 @@ function CustomBuilder() {
           <TextInput
             value={config.custom.name}
             placeholder={t.tasks.customNamePlaceholder}
-            onChange={(e) => patchCustom({ name: e.target.value })}
+            onChange={(e) => renameTask(e.target.value)}
           />
           <p className="mt-1.5 hidden text-xs leading-snug text-ink-400 lg:block">
             {t.tasks.buildOwnDesc}
@@ -493,6 +514,7 @@ export function StepTasks() {
   return (
     <div>
       <StepHeader eyebrow={t.tasks.eyebrow} title={t.tasks.title} subtitle={t.tasks.subtitle} />
+      <StepDetails text={t.details.tasks} />
 
       {/* Build your own: featured hero card */}
       <div
@@ -560,6 +582,8 @@ export function StepTasks() {
           <Badge tone={count ? "brand" : "neutral"}>{t.tasks.included(count)}</Badge>
         </div>
       </div>
+
+      <p className="mb-4 text-xs leading-relaxed text-ink-400">{t.tasks.sageNote}</p>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {TASKS.map((task) => {

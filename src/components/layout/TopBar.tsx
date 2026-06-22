@@ -9,13 +9,15 @@ import { Tooltip } from "../ui/Tooltip";
 import { cn } from "../../lib/utils";
 
 function LangSwitch() {
-  const { lang, setLang } = useI18n();
+  const { lang, setLang, t } = useI18n();
   return (
-    <div className="flex items-center rounded-lg bg-ink-100 p-0.5 text-xs font-bold">
+    <div className="flex items-center rounded-lg bg-ink-100 p-0.5 text-xs font-bold" role="group" aria-label={t.nav.language}>
       {(["en", "ja"] as const).map((l) => (
         <button
           key={l}
           onClick={() => setLang(l)}
+          aria-pressed={lang === l}
+          aria-label={l === "en" ? "English" : "日本語"}
           className={cn(
             "rounded-md px-2 py-1 transition-colors",
             lang === l ? "bg-surface text-ink-900 shadow-soft" : "text-ink-400 hover:text-ink-700",
@@ -76,7 +78,12 @@ export function TopBar() {
               {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             </Button>
           </Tooltip>
-          <a href="https://github.com/HiroshiKERA/calt-codebase/" target="_blank" rel="noreferrer">
+          <a
+            href="https://github.com/HiroshiKERA/calt-codebase/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label={t.nav.github}
+          >
             <Button variant="secondary" size="sm">
               <Github size={15} /> <span className="hidden sm:inline">{t.nav.github}</span>
             </Button>

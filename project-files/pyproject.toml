@@ -4,9 +4,10 @@ version = "0.1.0"
 description = "Experiments for learning algebraic computations with Transformers"
 requires-python = ">=3.10,<3.13"
 dependencies = [
-    # Pre-release: installed from the offline-pretokenization branch (adds calt.io.preprocess
-    # that the tasks rely on). Switch back to a published release once it is merged.
-    "calt-x @ git+https://github.com/HiroshiKERA/calt.git@feature/offline-pretokenization",
+    # Pre-release: installed from the feature/custom-embeddings branch (the most up-to-date
+    # calt — it includes calt.io.preprocess that the tasks rely on, plus the encoder-only
+    # model and pluggable embeddings). Switch to a published release once PR #36 is merged.
+    "calt-x @ git+https://github.com/HiroshiKERA/calt.git@feature/custom-embeddings",
     "omegaconf>=2.3.0",
     "matplotlib>=3.7.0",
     "click>=8.0.0",

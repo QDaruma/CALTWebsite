@@ -35,7 +35,7 @@ Transformer models on algebraic tasks. This app is the friendly front door to it
 
 The downloaded project installs the engine with **conda** (SageMath) + `pip`. ⚠️ The
 engine `calt-x` is currently installed from a **git branch**
-(`feature/offline-pretokenization`), because the tasks need its `calt.io.preprocess`.
+(`feature/custom-embeddings`), because the tasks need its `calt.io.preprocess`.
 This moves back to a pinned release once that branch is merged (see AI_CONTEXT §11).
 
 ## Run locally

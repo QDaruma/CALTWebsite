@@ -20,9 +20,17 @@
     <link rel="canonical" href="https://qdaruma.github.io/CALTWebsite/" />
     <link rel="icon" type="image/png" href="./logo.png" />
     <link rel="apple-touch-icon" href="./logo.png" />
+    <link rel="manifest" href="./site.webmanifest" />
+
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="CALT" />
+    <meta name="application-name" content="CALT Task Builder" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#5546e6" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161a26" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CALT Task Builder" />
     <meta property="og:title" content="CALT Task Builder" />
     <meta
       property="og:description"
@@ -30,6 +38,9 @@
     />
     <meta property="og:url" content="https://qdaruma.github.io/CALTWebsite/" />
     <meta property="og:image" content="https://qdaruma.github.io/CALTWebsite/logo.png" />
+    <meta property="og:image:alt" content="CALT Task Builder logo" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="ja_JP" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary" />
@@ -39,10 +50,14 @@
       content="Build a ready-to-run CALT project in your browser. Pick tasks, tune settings, download."
     />
     <meta name="twitter:image" content="https://qdaruma.github.io/CALTWebsite/logo.png" />
+    <meta name="twitter:image:alt" content="CALT Task Builder logo" />
 
     <!-- Structured data -->
     <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebApplication","name":"CALT Task Builder","applicationCategory":"DeveloperApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Build a ready-to-run CALT project in your browser: pick algebraic tasks, tune settings, and download a complete project that trains a small Transformer.","url":"https://qdaruma.github.io/CALTWebsite/"}
+{"@context":"https://schema.org","@type":"WebApplication","name":"CALT Task Builder","url":"https://qdaruma.github.io/CALTWebsite/","applicationCategory":"DeveloperApplication","operatingSystem":"Web","browserRequirements":"Requires JavaScript","isAccessibleForFree":true,"inLanguage":["en","ja"],"image":"https://qdaruma.github.io/CALTWebsite/logo.png","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Build a ready-to-run CALT project in your browser: pick algebraic tasks, tune settings, and download a complete project that trains a small Transformer.","featureList":["Prebuilt algebraic tasks (Gröbner basis, prime factor listing, dominant eigenvector, modular running sums, polynomial addition, permutation parity)","Build a custom task with an AI prompt or your own Python","Editable tokenizer and training settings with a live config preview","Downloads a complete, runnable CALT project as a ZIP"],"author":{"@type":"Organization","name":"CALT","url":"https://github.com/HiroshiKERA/calt"},"sameAs":["https://github.com/HiroshiKERA/calt","https://github.com/HiroshiKERA/calt-codebase"]}
+    </script>
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"CALT Task Builder","url":"https://qdaruma.github.io/CALTWebsite/","inLanguage":"en","publisher":{"@type":"Organization","name":"CALT","url":"https://github.com/HiroshiKERA/calt"}}
     </script>
 
     <!-- Set theme + language before paint to avoid a flash of the wrong theme. -->

@@ -1,33 +1,35 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Boxes, Check, Download, FolderTree, PackageOpen, Terminal } from "lucide-react";
+import { ArrowLeft, Boxes, Check, Download, FolderTree, HelpCircle, PackageOpen, Terminal } from "lucide-react";
 import { useWizard, hasSelection, customBuildConfig } from "../../state/store";
 import { useT } from "../../i18n";
-import { TASKS } from "../../lib/tasks";
-import { buildProjectZip, type ProjectSpec } from "../../lib/zip";
+import { buildProjectZip, projectFileMap, type ProjectSpec } from "../../lib/zip";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
-import { Badge } from "../ui/Badge";
-import { Segmented } from "../ui/Segmented";
 import { Disclosure } from "../ui/Disclosure";
 import { Confetti } from "../ui/Confetti";
+import { FileTree } from "../ui/FileTree";
 import { CodeBlock } from "../CodeBlock";
 import { StepHeader } from "../layout/StepChrome";
+import { StepDetails } from "../layout/StepDetails";
 import { downloadBlob, toSnakeCase } from "../../lib/utils";
 
 export function StepReview() {
-  const { config, prev, patch } = useWizard();
+  const { config, prev } = useWizard();
   const t = useT();
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [showTree, setShowTree] = useState(false);
 
   const proj = toSnakeCase(config.projectName) || "my_calt_project";
   const customCfg = customBuildConfig(config);
+  // The download is always a full, runnable project (the "Tasks only" option was
+  // dropped — the professor found it unnecessary).
   const spec: ProjectSpec = {
     projectName: config.projectName,
     selectedTasks: config.selectedTasks,
     customConfig: customCfg,
-    mode: config.downloadMode,
+    mode: "project",
     settings: {
       numTrain: config.numTrain,
       numTest: config.numTest,
@@ -39,18 +41,13 @@ export function StepReview() {
     perTaskSettings: config.perTaskSettings,
   };
 
-  const items = t.tasks.items;
-  const includedTasks = [
-    ...config.selectedTasks.map((id) => ({
-      id,
-      name: items[id]?.name ?? id,
-      sage: TASKS.find((x) => x.id === id)?.needsSage,
-    })),
-    ...(customCfg ? [{ id: "__custom", name: config.custom.name || "my_task", sage: false }] : []),
-  ];
-  const anySage = includedTasks.some((x) => x.sage);
+  const taskCount =
+    config.selectedTasks.length + (customCfg ? 1 : 0);
   const firstFolder =
     config.selectedTasks[0] ?? (customCfg ? toSnakeCase(config.custom.name) || "my_task" : "task");
+
+  // Real file list of the ZIP, so the tree shows exactly what gets downloaded.
+  const treePaths = useMemo(() => Object.keys(projectFileMap(spec)).sort(), [JSON.stringify(spec)]);
 
   const download = async () => {
     setBusy(true);
@@ -81,110 +78,96 @@ export function StepReview() {
   return (
     <div>
       <StepHeader eyebrow={t.review.eyebrow} title={t.review.title} subtitle={t.review.subtitle} />
+      <StepDetails text={t.details.finish} />
 
       <Card className="relative overflow-hidden p-6 sm:p-7">
         <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-brand-200/50 to-accent-400/30 blur-2xl" />
         <AnimatePresence>{done && <Confetti />}</AnimatePresence>
-        <div className="relative">
-          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-400">{t.review.dlMode}</span>
-          <div className="mt-2 max-w-md">
-            <Segmented
-              ariaLabel="download mode"
-              value={config.downloadMode}
-              onChange={(v) => patch({ downloadMode: v as "project" | "tasks" })}
-              options={[
-                { value: "project", label: t.review.dlProject },
-                { value: "tasks", label: t.review.dlTasks },
-              ]}
-            />
-          </div>
-          <p className="mt-2 text-sm text-ink-500">
-            {config.downloadMode === "project" ? t.review.dlProjectDesc : t.review.dlTasksDesc}
-          </p>
-
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-ink-400">{t.review.included}:</span>
-            {includedTasks.map((x) => (
-              <Badge key={x.id} tone={x.id === "__custom" ? "violet" : "brand"}>
-                {x.name}
-              </Badge>
-            ))}
-          </div>
-
-          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Button size="lg" shimmer loading={busy} onClick={download} className="sm:w-auto">
-              {!busy && <Download size={18} />} {t.review.download} ({proj}
-              {config.downloadMode === "project" ? ".zip" : "_tasks.zip"})
-            </Button>
-            <AnimatePresence>
-              {done && (
-                <motion.span
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-500"
-                >
-                  <Check size={15} /> {t.review.saved}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </div>
-          {anySage && (
-            <p className="mt-3 text-xs text-amber-600">{t.review.sageNote}</p>
-          )}
+        <div className="relative flex flex-wrap items-center gap-2">
+          <Button size="lg" shimmer loading={busy} onClick={download} className="sm:w-auto">
+            {!busy && <Download size={18} />} {t.review.download} ({proj}.zip)
+          </Button>
+          {/* The file tree is hidden by default and revealed via this "?" button. */}
+          <button
+            type="button"
+            onClick={() => setShowTree((s) => !s)}
+            aria-expanded={showTree}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-ink-600 ring-1 ring-ink-200 outline-none transition hover:text-ink-800 hover:ring-ink-300 focus-visible:ring-2 focus-visible:ring-brand-400/50"
+          >
+            <HelpCircle size={15} className="text-brand-600" /> {t.review.treeTitle}
+          </button>
+          <AnimatePresence>
+            {done && (
+              <motion.span
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-500"
+              >
+                <Check size={15} /> {t.review.saved}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
       </Card>
 
       <div className="mt-5 space-y-4">
-        <Disclosure icon={<FolderTree size={17} className="text-brand-600" />} title={t.review.peek} defaultOpen>
-          <p className="mb-3 text-sm text-ink-500">{t.review.peekBody}</p>
-          <ul className="space-y-2 text-sm text-ink-600">
-            {(config.downloadMode === "project"
-              ? [
-                  t.review.insideTaskFolders(includedTasks.length),
-                  t.review.insideShared,
-                  t.review.insideScripts,
-                  t.review.insideReadme,
-                ]
-              : [t.review.insideTasksOnly(includedTasks.length)]
-            ).map((line, i) => (
-              <li key={i} className="flex items-start gap-2.5">
-                <Check size={16} className="mt-0.5 flex-shrink-0 text-brand-600" />
-                {line}
-              </li>
-            ))}
-          </ul>
-        </Disclosure>
+        <AnimatePresence initial={false}>
+          {showTree && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden"
+            >
+              <Card className="p-5">
+                <div className="mb-3 flex items-center gap-2 text-[15px] font-bold text-ink-800">
+                  <FolderTree size={17} className="text-brand-600" /> {t.review.treeTitle}
+                </div>
+                <p className="mb-3 text-sm text-ink-500">{t.review.treeBody}</p>
+                <FileTree
+                  paths={treePaths}
+                  notes={t.review.treeNotes}
+                  strongNotes={{ configs: t.review.treeNotes.configs }}
+                />
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <Disclosure icon={<Terminal size={17} className="text-brand-600" />} title={t.review.howToUse} defaultOpen={done}>
           <p className="mb-3 text-sm text-ink-500">{t.review.prereq}</p>
           <ol className="mb-4 space-y-2.5 text-sm text-ink-600">
-            {[
-              config.downloadMode === "project" ? t.review.howUnzipProject(proj) : t.review.howUnzipTasks,
-              ...(config.downloadMode === "project" ? [t.review.howInstall] : []),
-              t.review.howRun,
-            ].map((line, i) => (
+            {[t.review.howUnzipProject(proj), t.review.howInstall, t.review.howRun].map((line, i) => (
               <li key={i} className="flex gap-2.5">
-                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-700">{i + 1}</span>
+                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-700">
+                  {i + 1}
+                </span>
                 {line}
               </li>
             ))}
           </ol>
-          {config.downloadMode === "project" && (
-            <div className="mb-3">
-              <CodeBlock
-                language="bash"
-                filename="terminal"
-                maxHeight="160px"
-                code={`# One-time setup with conda (details in README.md)\nconda create -n calt-env -c conda-forge sage python=3.12 -y\nconda activate calt-env\npip install "git+https://github.com/HiroshiKERA/calt.git@feature/offline-pretokenization" omegaconf matplotlib click`}
-              />
-            </div>
-          )}
+
           <CodeBlock
             language="bash"
             filename="terminal"
             maxHeight="180px"
-            code={`conda activate calt-env\ncd ${config.downloadMode === "project" ? proj + "/" : ""}${firstFolder}/experiments/toy/scripts\npython generate.py\npython train.py\npython evaluate.py`}
+            code={`conda activate calt-env\ncd ${proj}/${firstFolder}/experiments/toy/scripts\npython generate.py\npython train.py\npython evaluate.py`}
           />
+
+          {/* The conda + pip setup is install-method-dependent and tentative (it will
+              become a single `conda install calt-x` once published), so keep it
+              tucked away rather than front-and-center. */}
+          <div className="mt-3">
+            <Disclosure title={t.review.setupLabel}>
+              <CodeBlock
+                language="bash"
+                filename="terminal"
+                maxHeight="160px"
+                code={`# One-time setup with conda (details in README.md)\nconda create -n calt-env -c conda-forge sage python=3.12 -y\nconda activate calt-env\npip install "git+https://github.com/HiroshiKERA/calt.git@feature/custom-embeddings" matplotlib click`}
+              />
+            </Disclosure>
+          </div>
         </Disclosure>
       </div>
 
@@ -193,7 +176,7 @@ export function StepReview() {
           <ArrowLeft size={18} /> {t.review.back}
         </Button>
         <div className="flex items-center gap-2 text-sm text-ink-400">
-          <Boxes size={15} /> {includedTasks.length} {t.review.sTasks}
+          <Boxes size={15} /> {taskCount} {t.review.sTasks}
         </div>
       </div>
     </div>

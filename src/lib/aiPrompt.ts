@@ -9,10 +9,10 @@ import { toGeneratorClassName } from "./utils";
  */
 export function buildAiPrompt(taskName: string, description: string): string {
   const className = toGeneratorClassName(taskName || "my_task");
-  const desc = description.trim() || "(describe the task here: what is the question, and what is the correct answer?)";
+  const desc = description.trim() || "(describe the task here: what is the problem, and what is the correct answer?)";
 
   return `I'm using a machine-learning tool called CALT. It trains a model to read a
-question (as text) and produce the correct answer (as text). I need you to write
+problem (as text) and produce the correct answer (as text). I need you to write
 the small Python class that creates the training examples.
 
 THE TASK I WANT, in my own words:
@@ -23,7 +23,7 @@ ${desc}
 FIRST, before writing code, decide and state these explicitly (as a short comment
 block at the top of the file), because the model can only learn what the examples
 show:
-  - INPUT  : what the question string contains, and its assumptions
+  - INPUT  : what the problem string contains, and its assumptions
              (e.g. "two integers, each from 1 to 100, separated by a space").
   - OUTPUT : what the answer string is (e.g. "their greatest common divisor").
   - one concrete example pair, e.g.  "48 36"  ->  "12".
@@ -37,11 +37,11 @@ Write ONE Python class named "${className}" that follows these rules EXACTLY:
 1. __init__(self, ...): store the assumptions above as arguments that ALL have
    default values (e.g. low=1, high=100), so the class works with no arguments
    AND the ranges can be tuned from data.yaml.
-2. __call__(self, seed: int) -> tuple[str, str]: return a (question, answer) pair.
+2. __call__(self, seed: int) -> tuple[str, str]: return a (problem, answer) pair.
 3. It MUST be deterministic. Call random.seed(seed) at the very start of __call__
    (and seed any other random source you use), so the same seed always returns
    the same pair.
-4. "question" and "answer" must both be plain strings:
+4. "problem" and "answer" must both be plain strings:
    - separate numbers or items with single spaces, e.g. "3 7 11";
    - if one side is a list, join the items with " | ";
    - use only simple characters: digits, spaces, and + - * / ^ | ( ) . x y
@@ -58,7 +58,7 @@ Fill in this skeleton:
 
 import random
 
-# INPUT  : <describe the question + assumptions, e.g. two integers 1..100>
+# INPUT  : <describe the problem + assumptions, e.g. two integers 1..100>
 # OUTPUT : <describe the answer, e.g. their GCD>
 # EXAMPLE: "48 36" -> "12"
 
@@ -71,10 +71,10 @@ class ${className}:
 
     def __call__(self, seed: int) -> tuple[str, str]:
         random.seed(seed)
-        # build the question and compute its correct answer
-        question = ...
+        # build the problem and compute its correct answer
+        problem = ...
         answer = ...
-        return question, answer
+        return problem, answer
 `;
 }
 
@@ -86,10 +86,10 @@ class ${className}:
 export function buildMeasureAiPrompt(description: string): string {
   const desc =
     description.trim() ||
-    "(describe what you want to measure about each question or answer)";
+    "(describe what you want to measure about each problem or answer)";
 
   return `I'm using a machine-learning tool called CALT. For every training example it
-keeps a "question" and an "answer", both plain strings. I want to measure
+keeps a "problem" and an "answer", both plain strings. I want to measure
 something about them so I can see statistics across my dataset.
 
 WHAT I WANT TO MEASURE, in my own words:
@@ -104,7 +104,7 @@ Write the Python that records my measurement(s). Follow these rules EXACTLY:
            stats = {}
            # <-- your lines go exactly here
            return stats
-   "problem" is the question string, "answer" is the answer string.
+   "problem" is the problem string, "answer" is the answer string.
 2. Record each measurement as: stats["short_name"] = <a number>
    Use a short snake_case name (letters, digits, underscores) in the quotes.
 3. The value MUST be a number (int or float) computed from "problem" and/or

@@ -33,10 +33,11 @@ Transformer models on algebraic tasks. This app is the friendly front door to it
 4. **Finish.** Choose *Full project* or *Tasks only*, peek inside, and download the
    ZIP. A copy-paste run guide (conda install + 3 commands) is included.
 
-The downloaded project installs the engine with **conda** (SageMath) + `pip`. ⚠️ The
-engine `calt-x` is currently installed from a **git branch**
-(`feature/custom-embeddings`), because the tasks need its `calt.io.preprocess`.
-This moves back to a pinned release once that branch is merged (see AI_CONTEXT §11).
+The downloaded project installs the engine with **conda** (SageMath) + `pip`. The
+engine `calt-x` is installed from calt **`main`** (calt-x 1.3.0), which includes the
+`calt.io.preprocess` the tasks need (merged via PR #36 and PR #38). It is still
+installed from git because `calt-x` is not yet published to PyPI/conda; this moves to
+a pinned `calt-x==X.Y.Z` once it is (see AI_CONTEXT §11).
 
 ## Run locally
 

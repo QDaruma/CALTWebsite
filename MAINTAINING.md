@@ -8,10 +8,11 @@ for the full architecture and the multi-repo picture.
 
 1. **The engine `calt-x`** is not in the ZIP. The user installs it with conda:
    create a `calt-env` environment (SageMath from conda-forge) then
-   `pip install "git+https://github.com/HiroshiKERA/calt.git@feature/custom-embeddings" matplotlib click`
+   `pip install "git+https://github.com/HiroshiKERA/calt.git@main" matplotlib click`
    (omegaconf ships with calt-x, so it is not listed here).
-   ⚠️ It is installed from a **git branch**, not a released version, because the
-   bundled tasks import `calt.io.preprocess`, which only exists on that branch.
+   ⚠️ It is installed from `main` (calt-x 1.3.0) via **git**, not a package index,
+   because `calt-x` is not yet published to PyPI/conda. The bundled tasks import
+   `calt.io.preprocess`, which is on main (merged via PR #36 and PR #38).
    The generated `README.md` walks the user through it.
 
 2. **The task files** (generators, configs, `shared/`, scripts) are a frozen
@@ -20,7 +21,7 @@ for the full architecture and the multi-repo picture.
    gf17_addition, eigvec_3x3, polynomial_addition (border_basis is dropped).
 
 3. **Site-owned packaging** (`project-files/pyproject.toml`) carries the calt-x
-   source (currently the git branch). No install scripts — install is conda-based.
+   source (currently `git+…@main`). No install scripts — install is conda-based.
 
 Each project also gets `CALT_SNAPSHOT.txt` (bundle date + the calt-x source line).
 
@@ -50,14 +51,16 @@ patches `experiments/toy/configs/{data,train}.yaml` by key name
    (icon, tagline, `needsSage`).
 4. Add `tasks.items[id]` (name + summary) to **both** `src/i18n/en.ts` and `ja.ts`.
 
-## Switching calt-x from the branch back to a release (future)
+## Switching calt-x from git to a published release (future)
 
-Once `feature/custom-embeddings` is merged and a `calt-x` with
-`calt.io.preprocess` is published:
+The custom-embeddings work is merged (PR #36 + PR #38, calt-x 1.3.0 on `main`), so
+the pin now tracks `@main`. Once a `calt-x` with `calt.io.preprocess` is published to
+PyPI/conda:
 1. Test a task end to end against the released version (`pip show calt-x`).
 2. Replace the git URL with `calt-x==X.Y.Z` in **three** places:
    `project-files/pyproject.toml`, `src/lib/projectReadme.ts`,
-   `src/components/steps/StepReview.tsx`.
+   `src/components/steps/StepReview.tsx` (then re-bundle so
+   `src/generated/projectFiles.ts` picks up the new `pyproject.toml`).
 3. Re-bundle, rebuild, redeploy.
 
 > Related: the **Position embedding** "Learned" option writes the value `generic`

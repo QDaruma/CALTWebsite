@@ -4,10 +4,12 @@ version = "0.1.0"
 description = "Experiments for learning algebraic computations with Transformers"
 requires-python = ">=3.10,<3.13"
 dependencies = [
-    # Pre-release: installed from the feature/custom-embeddings branch (the most up-to-date
-    # calt — it includes calt.io.preprocess that the tasks rely on, plus the encoder-only
-    # model and pluggable embeddings). Switch to a published release once PR #36 is merged.
-    "calt-x @ git+https://github.com/HiroshiKERA/calt.git@feature/custom-embeddings",
+    # Installed from calt main. The work the tasks rely on (calt.io.preprocess, the
+    # encoder-only model and pluggable embeddings) landed on main via PR #36
+    # (feature/custom-embeddings) and PR #38, released as calt-x 1.3.0. Still installed
+    # from git because calt-x is not yet published to PyPI/conda; switch to a pinned
+    # "calt-x==X.Y.Z" once it is.
+    "calt-x @ git+https://github.com/HiroshiKERA/calt.git@main",
     "omegaconf>=2.3.0",
     "matplotlib>=3.7.0",
     "click>=8.0.0",

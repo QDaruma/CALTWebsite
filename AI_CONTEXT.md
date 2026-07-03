@@ -40,12 +40,13 @@ What a user downloads is assembled from two sources baked into
    the generated README).
 
 3. **The engine `calt-x`** is in neither: the user installs it with conda + pip.
-   ⚠️ **Strategy / important:** it is currently installed from a **git branch**, not
-   a released version:
-   `pip install "git+https://github.com/HiroshiKERA/calt.git@feature/custom-embeddings"`.
+   ⚠️ **Strategy / important:** it is installed from calt **`main`** via git, not from
+   a package index:
+   `pip install "git+https://github.com/HiroshiKERA/calt.git@main"`.
    Reason: the bundled tasks import `calt.io.preprocess` (offline pre-tokenization),
-   which only exists on that branch, not in the public `calt-x==1.1.0`. When that
-   branch is merged/released, switch the install back to a pinned `calt-x` (see §11).
+   which landed on `main` via PR #36 + PR #38 (calt-x 1.3.0) but is not in the public
+   `calt-x==1.1.0` tag. `main` is used because `calt-x` is not yet published to
+   PyPI/conda; switch to a pinned `calt-x==X.Y.Z` once it is (see §11).
 
 ## 3. Directory map
 
@@ -181,15 +182,17 @@ npm run build
 
 ## 11. Project strategy, decisions, and OPEN loose ends (read this)
 
-- **Install = git branch, not a release.** `project-files/pyproject.toml`,
-  `projectReadme.ts`, and `StepReview.tsx` install calt from
-  `feature/custom-embeddings` because the tasks need `calt.io.preprocess`.
-  TODO: switch to a pinned `calt-x==X.Y.Z` once merged/published.
+- **Install = calt `main` via git, not a package index.** `project-files/pyproject.toml`,
+  `projectReadme.ts`, and `StepReview.tsx` install calt from `@main` because the tasks
+  need `calt.io.preprocess`, which is now on main (merged via PR #36 + PR #38, calt-x
+  1.3.0). Was `feature/custom-embeddings` until that branch merged.
+  TODO: switch to a pinned `calt-x==X.Y.Z` once calt-x is published to PyPI/conda.
 - **Position embedding value = `generic`, label "Learned".** The engine's
   `get_positional_embedding` historically accepted only `generic/sinusoidal/rope/none`
-  ("learned" raised). A fix making "learned" an alias lives on the **encoder-only
-  library branch** (not yet published), so the site writes the safe value `generic`
-  today. Once the fix ships, "learned" can be used interchangeably.
+  ("learned" raised). The fix making "learned" an alias is now **on calt `main`**
+  (`register_positional_embedding("learned", _make_generic)`), so both work. The site
+  still writes the canonical `generic` for safety; emitting "learned" is now possible
+  and is a cosmetic choice.
 - **Encoder-only model work (library).** Quentin took over the professor's
   "encoder-only model for parity / custom input embedding / position embedding /
   compressing layer" requests. The encoder-only architecture + the "learned" fix are

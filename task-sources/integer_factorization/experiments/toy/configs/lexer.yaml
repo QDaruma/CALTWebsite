@@ -1,0 +1,16 @@
+vocab:
+  range:
+    numbers: ["", 0, 1000]
+  misc: ["|"]
+  special_tokens: {}
+  flags:
+    include_base_vocab: true
+    include_base_special_tokens: true
+
+number_policy:
+  attach_sign: false
+  digit_group: 3
+  allow_float: false
+
+strict: false
+include_base_vocab: true

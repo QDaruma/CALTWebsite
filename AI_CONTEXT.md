@@ -27,14 +27,14 @@ all three:
 | Repo | Role |
 |---|---|
 | **QDaruma/CALTWebsite** (this) | The static builder site. Bundles a snapshot of task code and produces downloadable projects. |
-| **QDaruma/CALTCode** | The experiment template: the actual **task folders** (`parity/`, `groebner_basis/`, `integer_factorization/`, `gf17_addition/`, `eigvec_3x3/`, `polynomial_addition/`) + `shared/`. The site bundles a snapshot of this. |
+| **`task-sources/`** (vendored into this site repo) | The actual **task folders** (`parity/`, `groebner_basis/`, `integer_factorization/`, `gf17_addition/`, `eigvec_3x3/`, `polynomial_addition/`) + `shared/`. The site bundles from here — it is self-contained. Originally copied from `QDaruma/CALTCode@feat/encoder-only-handoff` (being deleted). See `task-sources/README.md`. |
 | **HiroshiKERA/calt** (the professor's library; pip package `calt-x`) | The engine: `DatasetPipeline`, `IOPipeline`, `ModelPipeline`, `TrainerPipeline`, the Transformer model, tokenizer, positional embeddings. The downloaded projects install this. |
 
 What a user downloads is assembled from two sources baked into
 `src/generated/projectFiles.ts`:
 
-1. **Framework content** — task folders + `shared/`, snapshotted from **CALTCode**
-   (not from the professor's calt-codebase: we bundle from our QDaruma/CALTCode).
+1. **Framework content** — task folders + `shared/`, bundled from the vendored
+   **`task-sources/`** in this repo (self-contained; originally from CALTCode).
 2. **Site-owned packaging** — `project-files/pyproject.toml` (the only packaging
    file; there are no install scripts — installation is conda-based, documented in
    the generated README).
@@ -173,9 +173,9 @@ Weights & Biases logging toggle. The ConfigPreview sits beside these.
 - Reads `pyproject.toml` from `project-files/`.
 - Writes `CALT_SNAPSHOT.txt` (date + the calt-x source line) into the project.
 
-Re-bundle from the **local** CALTCode clone (this is how the 6 tasks got in):
+Re-bundle from the vendored `task-sources/` (default source, no network):
 ```bash
-node scripts/bundle-tasks.mjs /home/<you>/CALTCode
+npm run bundle        # = node scripts/bundle-tasks.mjs
 npm run build
 ```
 `sync-tasks.mjs` (`npm run sync:tasks`) clones a remote framework instead.
@@ -206,8 +206,8 @@ npm run build
 
 ## 12. How to extend
 
-- **New ready-made task:** add it to CALTCode (needs `core/generator.py` + toy
-  `configs/{data,train,lexer}.yaml`), re-bundle, then add the id to `ALLOWED_TASKS` +
+- **New ready-made task:** add it under `task-sources/` (needs `core/generator.py`
+  + toy `configs/{data,train,lexer}.yaml`), re-bundle, then add the id to `ALLOWED_TASKS` +
   `META` in `tasks.ts` and to `tasks.items` in `en.ts`/`ja.ts`.
 - **New build-your-own template:** add it in `templates.ts` (the picker shows it).
 - **New preset measurement:** add a `StatDef` in `stats.ts`.

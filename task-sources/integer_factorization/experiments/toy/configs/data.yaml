@@ -1,0 +1,17 @@
+# integer_factorization task (toy) — adapted from HiroshiKERA/calt-codebase examples/integer_factorization
+
+problem_generator:
+  n_primes: 5
+  max_number: 30
+
+dataset:
+  save_dir: "../data"
+  num_train_samples: 5000
+  num_test_samples: 500
+  batch_size: 1000
+  n_jobs: 4
+  root_seed: 42
+  verbose: true
+  backend: "sympy"
+  save_text: true
+  save_json: false

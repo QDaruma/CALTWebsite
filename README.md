@@ -11,11 +11,12 @@ Transformer models on algebraic tasks. This app is the friendly front door to it
 
 - **Static site.** No backend. React + Vite + TypeScript + Tailwind.
 - **Light / dark theme** and **English / 日本語**, both switchable in the top bar.
-- **Self-updating task content.** The ready-made tasks are a snapshot of the
-  **QDaruma/CALTCode** repo, refreshed by re-bundling (see *Updating the tasks*).
+- **Self-contained task content.** The ready-made tasks are vendored into this
+  repo under `task-sources/` and baked into the build by re-bundling (see
+  *Updating the tasks*). No external repo is needed.
 
-> This is one of three coordinated repos (this site, **CALTCode** = task code,
-> **HiroshiKERA/calt** = the `calt-x` engine). For the full picture, the strategy,
+> This is one of the coordinated CALT repos (this site with its vendored task
+> code, and **HiroshiKERA/calt** = the `calt-x` engine). For the full picture,
 > and the current loose ends, read **[AI_CONTEXT.md](AI_CONTEXT.md)** first.
 
 ## How a visitor uses it
@@ -61,21 +62,21 @@ domain or `https://<user>.github.io/<repo>/`).
 
 ## Updating the tasks
 
-The ready-made task files are a snapshot baked into `src/generated/projectFiles.ts`.
-Refresh them by re-bundling from a local **CALTCode** clone (the primary path):
+The ready-made task files are vendored under `task-sources/` and baked into
+`src/generated/projectFiles.ts`. Edit a task under `task-sources/`, then re-bundle:
 
 ```bash
-node scripts/bundle-tasks.mjs /path/to/CALTCode
+npm run bundle        # regenerate from task-sources/ (no network, no external repo)
 npm run build
 ```
 
 Then review the diff in `src/generated/projectFiles.ts`, test a task, and commit.
-`npm run sync:tasks` clones a remote framework instead
-(`CALT_REPO_URL=<url> npm run sync:tasks`).
+(Optional, while a source repo still exists: `CALT_REPO_URL=<url> npm run sync:tasks`
+re-vendors `task-sources/` from that remote, then bundles.)
 
-The engine source lives in `project-files/pyproject.toml` (currently a git branch,
-not a pinned release). See **[MAINTAINING.md](MAINTAINING.md)** for the switch-back
-procedure.
+The engine source lives in `project-files/pyproject.toml` (currently `git+…@main`,
+not a pinned release — calt-x isn't on PyPI/conda yet). See
+**[MAINTAINING.md](MAINTAINING.md)** for the switch-to-release procedure.
 
 See [MAINTAINING.md](MAINTAINING.md) for the full maintenance workflow and
 [AI_CONTEXT.md](AI_CONTEXT.md) for a deep architectural description.

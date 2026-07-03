@@ -27,15 +27,23 @@ Each project also gets `CALT_SNAPSHOT.txt` (bundle date + the calt-x source line
 
 ## Refreshing the task snapshot (do this deliberately, then test)
 
-Primary path — bundle from a local CALTCode clone:
+Primary path — bundle from a local CALTCode clone **on the branch that has all
+tasks** (`feat/encoder-only-handoff`; its `main` and calt-codebase `main` only
+have 2 of the 6):
 ```bash
-node scripts/bundle-tasks.mjs /path/to/CALTCode
+node scripts/bundle-tasks.mjs /path/to/CALTCode   # checked out on feat/encoder-only-handoff
 npm run build
 ```
 Then review the diff to `src/generated/projectFiles.ts`, test a task, and commit.
 
-`npm run sync:tasks` clones a remote framework instead
-(`CALT_REPO_URL=<url> npm run sync:tasks` to override the source).
+`npm run sync:tasks` clones the right repo+branch for you
+(`QDaruma/CALTCode` @ `feat/encoder-only-handoff` by default; override with
+`CALT_REPO_URL=<url>` / `CALT_REPO_BRANCH=<branch>`).
+
+**Safety net:** `bundle-tasks.mjs` refuses to overwrite `projectFiles.ts` if the
+source is missing any task that's currently bundled (pass `--force` to override).
+So pointing it at the wrong source (e.g. calt-codebase `main`) aborts loudly
+instead of silently dropping the 4 tasks that only live in CALTCode.
 
 If upstream renamed YAML keys, re-check `applySettings` in `src/lib/zip.ts` — it
 patches `experiments/toy/configs/{data,train}.yaml` by key name

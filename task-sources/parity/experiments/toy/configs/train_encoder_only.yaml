@@ -1,14 +1,10 @@
 model:
-  model_type: generic
-  architecture: encoder_only      # encoder-only classification head (single answer token)
-  encoder_pooling: first          # how encoder states are pooled: mean | first ([CLS]-style)
+  model_type: encoder_classifier   # encoder-only model: pools the encoder states and
+                                    # classifies over the vocabulary (single answer token)
   num_encoder_layers: 2
   num_encoder_heads: 4
-  num_decoder_layers: 2           # unused in encoder_only mode
-  num_decoder_heads: 4
   d_model: 128
   encoder_ffn_dim: 512
-  decoder_ffn_dim: 512
   max_sequence_length: 64
   use_positional_embedding: learned
 
@@ -35,6 +31,5 @@ data:
   train_dataset_path: ../data/train_raw.txt
   test_dataset_path: ../data/test_raw.txt
   lexer_config: ../configs/lexer.yaml
-  encoder_only: true              # collator emits single-token labels
   validate_train_tokens: false
   validate_test_tokens: false

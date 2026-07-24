@@ -52,12 +52,10 @@ conda create -n calt-env -c conda-forge sage python=3.12 -y
 conda activate calt-env
 
 # 3. Install the CALT engine and helpers
-pip install "git+https://github.com/HiroshiKERA/calt.git@main" matplotlib click
+pip install calt-x==1.3.0 matplotlib click
 \`\`\`
 
-> **Note**: the engine is installed from calt \`main\` (calt-x 1.3.0), which
-> includes the offline pre-tokenization the tasks rely on. Once calt-x is
-> published to PyPI/conda this becomes a plain \`pip install calt-x\`.
+> **Note**: \`calt-x\` 1.3.0 includes the offline pre-tokenization the tasks rely on.
 
 Check it worked:
 

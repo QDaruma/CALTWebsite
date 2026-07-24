@@ -164,7 +164,7 @@ export function StepReview() {
                 language="bash"
                 filename="terminal"
                 maxHeight="160px"
-                code={`# One-time setup with conda (details in README.md)\nconda create -n calt-env -c conda-forge sage python=3.12 -y\nconda activate calt-env\npip install "git+https://github.com/HiroshiKERA/calt.git@main" matplotlib click`}
+                code={`# One-time setup with conda (details in README.md)\nconda create -n calt-env -c conda-forge sage python=3.12 -y\nconda activate calt-env\npip install calt-x==1.3.0 matplotlib click`}
               />
             </Disclosure>
           </div>

@@ -35,10 +35,8 @@ Transformer models on algebraic tasks. This app is the friendly front door to it
    ZIP. A copy-paste run guide (conda install + 3 commands) is included.
 
 The downloaded project installs the engine with **conda** (SageMath) + `pip`. The
-engine `calt-x` is installed from calt **`main`** (calt-x 1.3.0), which includes the
-`calt.io.preprocess` the tasks need (merged via PR #36 and PR #38). It is still
-installed from git because `calt-x` is not yet published to PyPI/conda; this moves to
-a pinned `calt-x==X.Y.Z` once it is (see AI_CONTEXT §11).
+engine `calt-x==1.3.0` (PyPI) includes the `calt.io.preprocess` the tasks need
+(merged via PR #36 and PR #38).
 
 ## Run locally
 
@@ -74,9 +72,8 @@ Then review the diff in `src/generated/projectFiles.ts`, test a task, and commit
 (Optional, while a source repo still exists: `CALT_REPO_URL=<url> npm run sync:tasks`
 re-vendors `task-sources/` from that remote, then bundles.)
 
-The engine source lives in `project-files/pyproject.toml` (currently `git+…@main`,
-not a pinned release — calt-x isn't on PyPI/conda yet). See
-**[MAINTAINING.md](MAINTAINING.md)** for the switch-to-release procedure.
+The engine source lives in `project-files/pyproject.toml` (pinned `calt-x==1.3.0`
+from PyPI). See **[MAINTAINING.md](MAINTAINING.md)** for how to bump it.
 
 See [MAINTAINING.md](MAINTAINING.md) for the full maintenance workflow and
 [AI_CONTEXT.md](AI_CONTEXT.md) for a deep architectural description.

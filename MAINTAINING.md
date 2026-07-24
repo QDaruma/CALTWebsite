@@ -8,12 +8,10 @@ for the full architecture and the multi-repo picture.
 
 1. **The engine `calt-x`** is not in the ZIP. The user installs it with conda:
    create a `calt-env` environment (SageMath from conda-forge) then
-   `pip install "git+https://github.com/HiroshiKERA/calt.git@main" matplotlib click`
+   `pip install calt-x==1.3.0 matplotlib click`
    (omegaconf ships with calt-x, so it is not listed here).
-   ⚠️ It is installed from `main` (calt-x 1.3.0) via **git**, not a package index,
-   because `calt-x` is not yet published to PyPI/conda. The bundled tasks import
-   `calt.io.preprocess`, which is on main (merged via PR #36 and PR #38).
-   The generated `README.md` walks the user through it.
+   The bundled tasks import `calt.io.preprocess`, which is in calt-x 1.3.0 (PR #36 +
+   PR #38). The generated `README.md` walks the user through it.
 
 2. **The task files** (generators, configs, `shared/`, scripts) are a frozen
    snapshot in `src/generated/projectFiles.ts`, regenerated from the **vendored
@@ -23,7 +21,7 @@ for the full architecture and the multi-repo picture.
    gf17_addition, eigvec_3x3, polynomial_addition (border_basis is dropped).
 
 3. **Site-owned packaging** (`project-files/pyproject.toml`) carries the calt-x
-   source (currently `git+…@main`). No install scripts — install is conda-based.
+   pin (`calt-x==1.3.0`). No install scripts — install is conda-based.
 
 Each project also gets `CALT_SNAPSHOT.txt` (bundle date + the calt-x source line).
 
@@ -64,22 +62,19 @@ patches `experiments/toy/configs/{data,train}.yaml` by key name
    (icon, tagline, `needsSage`).
 4. Add `tasks.items[id]` (name + summary) to **both** `src/i18n/en.ts` and `ja.ts`.
 
-## Switching calt-x from git to a published release (future)
+## Bumping the calt-x version
 
-The custom-embeddings work is merged (PR #36 + PR #38, calt-x 1.3.0 on `main`), so
-the pin now tracks `@main`. Once a `calt-x` with `calt.io.preprocess` is published to
-PyPI/conda:
-1. Test a task end to end against the released version (`pip show calt-x`).
-2. Replace the git URL with `calt-x==X.Y.Z` in **three** places:
+The engine is pinned to `calt-x==1.3.0` (PyPI). To move to a newer release:
+1. Test a task end to end against the new version (`pip show calt-x`).
+2. Bump `calt-x==X.Y.Z` in **three** places:
    `project-files/pyproject.toml`, `src/lib/projectReadme.ts`,
    `src/components/steps/StepReview.tsx` (then re-bundle so
    `src/generated/projectFiles.ts` picks up the new `pyproject.toml`).
 3. Re-bundle, rebuild, redeploy.
 
-> Related: the **Position embedding** "Learned" option writes the value `generic`
-> (the engine only accepts `generic/sinusoidal/rope/none` today). A fix making
-> "learned" a valid alias is on the encoder-only library branch; once published you
-> may switch the value back to `learned` if desired (it is the same thing).
+> Related: the **Position embedding** "Learned" option writes the value `generic`.
+> The engine now also accepts `learned` as an alias (calt-x 1.3.0), so emitting
+> `learned` instead is a cosmetic choice.
 
 ## Quick check that a task still works
 

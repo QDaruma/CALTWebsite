@@ -39,14 +39,10 @@ What a user downloads is assembled from two sources baked into
    file; there are no install scripts — installation is conda-based, documented in
    the generated README).
 
-3. **The engine `calt-x`** is in neither: the user installs it with conda + pip.
-   ⚠️ **Strategy / important:** it is installed from calt **`main`** via git, not from
-   a package index:
-   `pip install "git+https://github.com/HiroshiKERA/calt.git@main"`.
-   Reason: the bundled tasks import `calt.io.preprocess` (offline pre-tokenization),
-   which landed on `main` via PR #36 + PR #38 (calt-x 1.3.0) but is not in the public
-   `calt-x==1.1.0` tag. `main` is used because `calt-x` is not yet published to
-   PyPI/conda; switch to a pinned `calt-x==X.Y.Z` once it is (see §11).
+3. **The engine `calt-x`** is in neither: the user installs it with conda + pip,
+   `pip install calt-x==1.3.0` (PyPI). The bundled tasks import `calt.io.preprocess`
+   (offline pre-tokenization), which is in calt-x 1.3.0 (PR #36 + PR #38). To bump
+   the version, see §11.
 
 ## 3. Directory map
 
@@ -182,11 +178,10 @@ npm run build
 
 ## 11. Project strategy, decisions, and OPEN loose ends (read this)
 
-- **Install = calt `main` via git, not a package index.** `project-files/pyproject.toml`,
-  `projectReadme.ts`, and `StepReview.tsx` install calt from `@main` because the tasks
-  need `calt.io.preprocess`, which is now on main (merged via PR #36 + PR #38, calt-x
-  1.3.0). Was `feature/custom-embeddings` until that branch merged.
-  TODO: switch to a pinned `calt-x==X.Y.Z` once calt-x is published to PyPI/conda.
+- **Install = `calt-x==1.3.0` from PyPI.** `project-files/pyproject.toml`,
+  `projectReadme.ts`, and `StepReview.tsx` pin `calt-x==1.3.0`, which carries
+  `calt.io.preprocess` (PR #36 + PR #38). Bump the pin in those three places to move
+  to a newer release (see §11).
 - **Position embedding value = `generic`, label "Learned".** The engine's
   `get_positional_embedding` historically accepted only `generic/sinusoidal/rope/none`
   ("learned" raised). The fix making "learned" an alias is now **on calt `main`**

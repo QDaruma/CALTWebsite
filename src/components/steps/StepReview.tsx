@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { CALT_REQUIREMENT } from "../../lib/caltVersion";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Boxes, Check, Download, FolderTree, HelpCircle, PackageOpen, Terminal } from "lucide-react";
 import { useWizard, hasSelection, customBuildConfig } from "../../state/store";
@@ -36,6 +37,7 @@ export function StepReview() {
       epochs: config.epochs,
       modelPreset: config.modelPreset,
       posEmbedding: config.posEmbedding,
+      modelType: config.modelType,
       useWandb: config.useWandb,
     },
     perTaskSettings: config.perTaskSettings,
@@ -164,7 +166,7 @@ export function StepReview() {
                 language="bash"
                 filename="terminal"
                 maxHeight="160px"
-                code={`# One-time setup with conda (details in README.md)\nconda create -n calt-env -c conda-forge sage python=3.12 -y\nconda activate calt-env\npip install calt-x==1.3.0 matplotlib click`}
+                code={`# One-time setup with conda (details in README.md)\nconda create -n calt-env -c conda-forge sage python=3.12 -y\nconda activate calt-env\npip install ${CALT_REQUIREMENT} matplotlib click`}
               />
             </Disclosure>
           </div>

@@ -14,6 +14,15 @@ export type ModelPreset = "small" | "medium" | "large";
 // accepts the alias "learned" only once the library fix is published.)
 export type PosEmbedding = "generic" | "sinusoidal" | "rope" | "none";
 
+/**
+ * Architectures CALT can build. `generic` is the hand-rolled encoder-decoder and
+ * the historical default; `bart` is the HuggingFace variant; `encoder_classifier`
+ * drops the decoder for single-token targets (parity and friends); `monomial`
+ * packs a coefficient and its exponents into one sequence position and needs
+ * expanded-form data plus model.num_variables.
+ */
+export type ModelType = "generic" | "bart" | "encoder_classifier" | "monomial";
+
 // User-editable tokenizer settings (lexer.yaml). Mirrors the real CALT schema:
 // vocab.range.numbers, vocab.misc, number_policy.{attach_sign,digit_group,allow_float}.
 export interface LexerConfig {
@@ -57,6 +66,7 @@ export interface BuildConfig {
   epochs: number;
   modelPreset: ModelPreset;
   posEmbedding: PosEmbedding;
+  modelType: ModelType;
   useWandb: boolean;
 }
 
@@ -288,7 +298,7 @@ function trainYaml(cfg: BuildConfig, snake: string): string {
   const m = MODEL_PRESETS[cfg.modelPreset];
   return `# Model + training configuration for the ${snake} toy experiment.
 model:
-  model_type: generic
+  model_type: ${cfg.modelType}
   num_encoder_layers: ${m.layers}
   num_encoder_heads: ${m.heads}
   num_decoder_layers: ${m.layers}

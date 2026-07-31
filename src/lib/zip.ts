@@ -1,4 +1,5 @@
-import { buildFiles, MODEL_PRESETS, type BuildConfig, type ModelPreset, type PosEmbedding } from "./codegen";
+import { buildFiles, MODEL_PRESETS, type BuildConfig, type ModelPreset, type ModelType, type PosEmbedding } from "./codegen";
+import { CALT_REQUIREMENT } from "./caltVersion";
 import { TASK_FILES, COMMON_FILES } from "../generated/projectFiles";
 import { getTaskMeta } from "./tasks";
 import { buildProjectReadme } from "./projectReadme";
@@ -11,6 +12,7 @@ export interface ProjectSettings {
   epochs: number;
   modelPreset: ModelPreset;
   posEmbedding: PosEmbedding;
+  modelType: ModelType;
   useWandb: boolean;
 }
 
@@ -52,6 +54,9 @@ function applySettings(path: string, content: string, s: ProjectSettings): strin
   if (path.endsWith("experiments/toy/configs/data.yaml")) {
     content = setYamlInt(content, "num_train_samples", s.numTrain);
     content = setYamlInt(content, "num_test_samples", s.numTest);
+  } else if (path.endsWith("pyproject.toml")) {
+    // Keep the bundled pin in step with caltVersion.ts, whatever the snapshot holds.
+    content = content.replace(/calt-x==[0-9]+\.[0-9]+\.[0-9]+/g, CALT_REQUIREMENT);
   } else if (path.endsWith("experiments/toy/configs/train.yaml")) {
     const m = MODEL_PRESETS[s.modelPreset];
     content = setYamlInt(content, "num_encoder_layers", m.layers);
@@ -63,6 +68,7 @@ function applySettings(path: string, content: string, s: ProjectSettings): strin
     content = setYamlInt(content, "decoder_ffn_dim", m.ffn);
     content = setYamlInt(content, "num_train_epochs", s.epochs);
     content = setYamlStr(content, "use_positional_embedding", s.posEmbedding);
+    content = setYamlStr(content, "model_type", s.modelType);
     content = setYamlBool(content, "no_wandb", !s.useWandb);
   }
   return content;

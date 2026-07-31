@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { PackageOpen, ArrowLeft } from "lucide-react";
 import { useWizard, hasSelection, customBuildConfig, type TaskSettings } from "../../state/store";
 import { useT } from "../../i18n";
-import { type ModelPreset, type PosEmbedding } from "../../lib/codegen";
+import { type ModelPreset, type ModelType, type PosEmbedding } from "../../lib/codegen";
 import { ConfigPreview } from "../ConfigPreview";
 import { Card, SectionLabel } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -39,6 +39,13 @@ function TaskSettingsForm({ settings, onChange }: TaskSettingsFormProps) {
     medium: t.review.brainNoteMedium,
     large: t.review.brainNoteLarge,
   };
+  const modelTypeNote: Record<ModelType, string> = {
+    generic: "The default encoder-decoder. Works for any sequence-to-sequence task.",
+    bart: "HuggingFace BART. Same task shape as Standard, different implementation.",
+    encoder_classifier: "No decoder: predicts one token. Use it when the target is a single label.",
+    monomial: "One position per monomial. Much shorter polynomial sequences; needs expanded-form data.",
+  };
+
   const posEmbNote: Record<PosEmbedding, string> = {
     generic: t.review.posEmbNoteGeneric,
     sinusoidal: t.review.posEmbNoteSinusoidal,
@@ -99,6 +106,34 @@ function TaskSettingsForm({ settings, onChange }: TaskSettingsFormProps) {
           ]}
         />
         <p className="mt-2 text-xs text-ink-500">{posEmbNote[settings.posEmbedding]}</p>
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center gap-1.5">
+          <span className="text-sm font-bold text-ink-800">Model architecture</span>
+          <InfoHint title="Model architecture">
+            <p>
+              Which model CALT builds. <b>Standard</b> is the encoder-decoder used by
+              default. <b>BART</b> is the HuggingFace variant. <b>Encoder only</b>
+              drops the decoder and classifies a single token, for targets like a
+              parity bit. <b>Monomial</b> packs a coefficient and its exponents into
+              one sequence position, which shortens polynomial sequences a lot; it
+              needs expanded-form data and <code>model.num_variables</code>.
+            </p>
+          </InfoHint>
+        </div>
+        <Segmented
+          ariaLabel="model architecture"
+          value={settings.modelType}
+          onChange={(v) => onChange({ modelType: v as ModelType })}
+          options={[
+            { value: "generic", label: "Standard" },
+            { value: "bart", label: "BART" },
+            { value: "encoder_classifier", label: "Encoder only" },
+            { value: "monomial", label: "Monomial" },
+          ]}
+        />
+        <p className="mt-2 text-xs text-ink-500">{modelTypeNote[settings.modelType]}</p>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">

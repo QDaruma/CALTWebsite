@@ -1,3 +1,4 @@
+import { CALT_REQUIREMENT } from "./caltVersion";
 // Generates the README.md placed at the root of a "full project" download.
 // Plain, beginner-friendly, English (it sits next to the code).
 //
@@ -52,7 +53,7 @@ conda create -n calt-env -c conda-forge sage python=3.12 -y
 conda activate calt-env
 
 # 3. Install the CALT engine and helpers
-pip install calt-x==1.3.0 matplotlib click
+pip install ${CALT_REQUIREMENT} matplotlib click
 \`\`\`
 
 > **Note**: \`calt-x\` 1.3.0 includes the offline pre-tokenization the tasks rely on.

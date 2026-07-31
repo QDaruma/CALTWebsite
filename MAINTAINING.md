@@ -8,10 +8,11 @@ for the full architecture and the multi-repo picture.
 
 1. **The engine `calt-x`** is not in the ZIP. The user installs it with conda:
    create a `calt-env` environment (SageMath from conda-forge) then
-   `pip install calt-x==1.3.0 matplotlib click`
+   `pip install calt-x==1.4.0 matplotlib click`
    (omegaconf ships with calt-x, so it is not listed here).
    The bundled tasks import `calt.io.preprocess`, which is in calt-x 1.3.0 (PR #36 +
-   PR #38). The generated `README.md` walks the user through it.
+   PR #38). The generated `README.md` walks the user through it. 1.4.0 is the
+   first release with the monomial embedding (`model_type: monomial`).
 
 2. **The task files** (generators, configs, `shared/`, scripts) are a frozen
    snapshot in `src/generated/projectFiles.ts`, regenerated from the **vendored
@@ -21,7 +22,11 @@ for the full architecture and the multi-repo picture.
    gf17_addition, eigvec_3x3, polynomial_addition (border_basis is dropped).
 
 3. **Site-owned packaging** (`project-files/pyproject.toml`) carries the calt-x
-   pin (`calt-x==1.3.0`). No install scripts — install is conda-based.
+   pin. **The version now lives in one place, `src/lib/caltVersion.ts`**; the
+   README, the review step and `applySettings` in `zip.ts` all read it, and
+   `zip.ts` rewrites the pin inside `pyproject.toml` at download time so the
+   bundled snapshot cannot drift. To bump the engine, edit that constant, then
+   `npm run bundle && npm run build`. No install scripts — install is conda-based.
 
 Each project also gets `CALT_SNAPSHOT.txt` (bundle date + the calt-x source line).
 

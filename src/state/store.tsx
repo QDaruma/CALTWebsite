@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { type BuildConfig, type LexerConfig, type ModelPreset, type PosEmbedding } from "../lib/codegen";
+import { type BuildConfig, type LexerConfig, type ModelPreset, type ModelType, type PosEmbedding } from "../lib/codegen";
 import { defaultSelectedStats } from "../lib/stats";
 
 // Persist the in-progress wizard to sessionStorage so a refresh (or accidental
@@ -13,6 +13,7 @@ export interface TaskSettings {
   epochs: number;
   modelPreset: ModelPreset;
   posEmbedding: PosEmbedding;
+  modelType: ModelType;
   useWandb: boolean;
 }
 
@@ -51,6 +52,7 @@ export interface WizardConfig {
   epochs: number;
   modelPreset: ModelPreset;
   posEmbedding: PosEmbedding;
+  modelType: ModelType;
   useWandb: boolean;
   downloadMode: "project" | "tasks";
   /** Per-task overrides; merged with global defaults at download time. */
@@ -74,6 +76,7 @@ const defaultConfig: WizardConfig = {
   epochs: 100,
   modelPreset: "small",
   posEmbedding: "generic",
+  modelType: "generic",
   useWandb: false,
   downloadMode: "project",
   perTaskSettings: {},
@@ -167,6 +170,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         epochs: config.epochs,
         modelPreset: config.modelPreset,
         posEmbedding: config.posEmbedding,
+        modelType: config.modelType,
         useWandb: config.useWandb,
         ...config.perTaskSettings[taskId],
       }),
@@ -205,6 +209,7 @@ export function customBuildConfig(c: WizardConfig): BuildConfig | null {
     epochs: c.epochs,
     modelPreset: c.modelPreset,
     posEmbedding: c.posEmbedding,
+    modelType: c.modelType,
     useWandb: c.useWandb,
     ...c.perTaskSettings["__custom"],
   };
@@ -222,6 +227,7 @@ export function customBuildConfig(c: WizardConfig): BuildConfig | null {
     epochs: s.epochs,
     modelPreset: s.modelPreset,
     posEmbedding: s.posEmbedding,
+    modelType: s.modelType,
     useWandb: s.useWandb,
   };
 }

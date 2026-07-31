@@ -6,7 +6,7 @@ requires-python = ">=3.10,<3.13"
 dependencies = [
     # calt-x 1.3.0 (PyPI). Provides calt.io.preprocess, the encoder-only model and
     # pluggable embeddings that the tasks rely on (PR #36 + PR #38).
-    "calt-x==1.3.0",
+    "calt-x==1.4.0",
     "omegaconf>=2.3.0",
     "matplotlib>=3.7.0",
     "click>=8.0.0",

@@ -166,6 +166,25 @@ export const en = {
       "Rotary positions. Often the best at handling inputs longer than those seen in training.",
     posEmbNoteNone:
       "No position information at all. Only pick this if the order of the tokens does not matter for your task.",
+    arch: "Model architecture",
+    archInfoTitle: "Model architecture",
+    archInfo:
+      "Which model CALT builds. “Standard” is the encoder-decoder used by default. “BART” is the HuggingFace variant. “Encoder only” drops the decoder and predicts a single token, for targets like a parity bit. “Decoder only” drops the encoder instead and runs one causal stack over the problem followed by its solution. “Monomial” packs a coefficient and its exponents into one sequence position, which shortens polynomial sequences a lot; it needs expanded-form data.",
+    archStandard: "Standard",
+    archBart: "BART",
+    archEncoderOnly: "Encoder only",
+    archDecoderOnly: "Decoder only",
+    archMonomial: "Monomial",
+    archNoteGeneric:
+      "The default encoder-decoder. Works for any sequence-to-sequence task.",
+    archNoteBart:
+      "HuggingFace BART. Same task shape as Standard, different implementation.",
+    archNoteEncoderClassifier:
+      "No decoder: predicts one token. Use it when the target is a single label.",
+    archNoteDecoderOnly:
+      "One causal stack over problem and solution. The usual choice for arithmetic tasks.",
+    archNoteMonomial:
+      "One position per monomial. Much shorter polynomial sequences; needs expanded-form data.",
     rounds: "Training rounds",
     roundsInfoTitle: "Training rounds",
     roundsInfo:

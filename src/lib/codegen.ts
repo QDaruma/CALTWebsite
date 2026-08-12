@@ -17,11 +17,24 @@ export type PosEmbedding = "generic" | "sinusoidal" | "rope" | "none";
 /**
  * Architectures CALT can build. `generic` is the hand-rolled encoder-decoder and
  * the historical default; `bart` is the HuggingFace variant; `encoder_classifier`
- * drops the decoder for single-token targets (parity and friends); `monomial`
- * packs a coefficient and its exponents into one sequence position and needs
+ * drops the decoder for single-token targets (parity and friends);
+ * `decoder_only` keeps one causal stack over the problem and its solution, which
+ * is the convention in the arithmetic-reasoning literature; `monomial` packs a
+ * coefficient and its exponents into one sequence position and needs
  * expanded-form data plus model.num_variables.
+ *
+ * The train.yaml this file emits carries the encoder/decoder key pairs. That is
+ * fine for `decoder_only`: its config mapping reads num_layers / num_heads /
+ * ffn_dim first and falls back to the decoder-side keys, so the same file drives
+ * either architecture. Note it then runs at half the depth of its 6+6
+ * counterpart, since one stack takes the decoder layer count.
  */
-export type ModelType = "generic" | "bart" | "encoder_classifier" | "monomial";
+export type ModelType =
+  | "generic"
+  | "bart"
+  | "encoder_classifier"
+  | "decoder_only"
+  | "monomial";
 
 // User-editable tokenizer settings (lexer.yaml). Mirrors the real CALT schema:
 // vocab.range.numbers, vocab.misc, number_policy.{attach_sign,digit_group,allow_float}.

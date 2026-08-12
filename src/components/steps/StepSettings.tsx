@@ -40,10 +40,11 @@ function TaskSettingsForm({ settings, onChange }: TaskSettingsFormProps) {
     large: t.review.brainNoteLarge,
   };
   const modelTypeNote: Record<ModelType, string> = {
-    generic: "The default encoder-decoder. Works for any sequence-to-sequence task.",
-    bart: "HuggingFace BART. Same task shape as Standard, different implementation.",
-    encoder_classifier: "No decoder: predicts one token. Use it when the target is a single label.",
-    monomial: "One position per monomial. Much shorter polynomial sequences; needs expanded-form data.",
+    generic: t.review.archNoteGeneric,
+    bart: t.review.archNoteBart,
+    encoder_classifier: t.review.archNoteEncoderClassifier,
+    decoder_only: t.review.archNoteDecoderOnly,
+    monomial: t.review.archNoteMonomial,
   };
 
   const posEmbNote: Record<PosEmbedding, string> = {
@@ -110,27 +111,19 @@ function TaskSettingsForm({ settings, onChange }: TaskSettingsFormProps) {
 
       <div>
         <div className="mb-2 flex items-center gap-1.5">
-          <span className="text-sm font-bold text-ink-800">Model architecture</span>
-          <InfoHint title="Model architecture">
-            <p>
-              Which model CALT builds. <b>Standard</b> is the encoder-decoder used by
-              default. <b>BART</b> is the HuggingFace variant. <b>Encoder only</b>
-              drops the decoder and classifies a single token, for targets like a
-              parity bit. <b>Monomial</b> packs a coefficient and its exponents into
-              one sequence position, which shortens polynomial sequences a lot; it
-              needs expanded-form data and <code>model.num_variables</code>.
-            </p>
-          </InfoHint>
+          <span className="text-sm font-bold text-ink-800">{t.review.arch}</span>
+          <InfoHint title={t.review.archInfoTitle}><p>{t.review.archInfo}</p></InfoHint>
         </div>
         <Segmented
           ariaLabel="model architecture"
           value={settings.modelType}
           onChange={(v) => onChange({ modelType: v as ModelType })}
           options={[
-            { value: "generic", label: "Standard" },
-            { value: "bart", label: "BART" },
-            { value: "encoder_classifier", label: "Encoder only" },
-            { value: "monomial", label: "Monomial" },
+            { value: "generic", label: t.review.archStandard },
+            { value: "bart", label: t.review.archBart },
+            { value: "encoder_classifier", label: t.review.archEncoderOnly },
+            { value: "decoder_only", label: t.review.archDecoderOnly },
+            { value: "monomial", label: t.review.archMonomial },
           ]}
         />
         <p className="mt-2 text-xs text-ink-500">{modelTypeNote[settings.modelType]}</p>

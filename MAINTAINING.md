@@ -8,11 +8,12 @@ for the full architecture and the multi-repo picture.
 
 1. **The engine `calt-x`** is not in the ZIP. The user installs it with conda:
    create a `calt-env` environment (SageMath from conda-forge) then
-   `pip install calt-x==1.4.0 matplotlib click`
+   `pip install calt-x==1.5.0 matplotlib click`
    (omegaconf ships with calt-x, so it is not listed here).
-   The bundled tasks import `calt.io.preprocess`, which is in calt-x 1.3.0 (PR #36 +
-   PR #38). The generated `README.md` walks the user through it. 1.4.0 is the
-   first release with the monomial embedding (`model_type: monomial`).
+   The bundled tasks import `calt.io.preprocess`. The generated `README.md` walks
+   the user through it. 1.4.0 added the monomial embedding (`model_type: monomial`);
+   1.5.0 added the decoder-only model (`model_type: decoder_only`) and, more
+   importantly, the embedding normalization fix, so do not pin lower.
 
 2. **The task files** (generators, configs, `shared/`, scripts) are a frozen
    snapshot in `src/generated/projectFiles.ts`, regenerated from the **vendored
@@ -69,17 +70,22 @@ patches `experiments/toy/configs/{data,train}.yaml` by key name
 
 ## Bumping the calt-x version
 
-The engine is pinned to `calt-x==1.3.0` (PyPI). To move to a newer release:
+The engine is pinned to `calt-x==1.5.0` (PyPI). The version lives in **one** place:
+
 1. Test a task end to end against the new version (`pip show calt-x`).
-2. Bump `calt-x==X.Y.Z` in **three** places:
-   `project-files/pyproject.toml`, `src/lib/projectReadme.ts`,
-   `src/components/steps/StepReview.tsx` (then re-bundle so
-   `src/generated/projectFiles.ts` picks up the new `pyproject.toml`).
-3. Re-bundle, rebuild, redeploy.
+2. Edit `CALT_VERSION` in `src/lib/caltVersion.ts`. That is the whole change.
+   `projectReadme.ts` and `StepReview.tsx` read the constant, and `applySettings`
+   in `zip.ts` rewrites the pin inside the bundled `pyproject.toml` at download
+   time, so the ZIP can never drift from it.
+3. Rebuild and redeploy. Re-bundling is only needed if a task source changed.
+
+> `project-files/pyproject.toml` still holds a literal pin. It is the fallback the
+> bundle carries, and `zip.ts` overwrites it on the way out, so it can lag without
+> reaching a user. Keeping it in step is tidiness, not correctness.
 
 > Related: the **Position embedding** "Learned" option writes the value `generic`.
-> The engine now also accepts `learned` as an alias (calt-x 1.3.0), so emitting
-> `learned` instead is a cosmetic choice.
+> The engine also accepts `learned` as an alias, so emitting `learned` instead is
+> a cosmetic choice.
 
 ## Quick check that a task still works
 

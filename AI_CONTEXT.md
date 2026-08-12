@@ -40,9 +40,9 @@ What a user downloads is assembled from two sources baked into
    the generated README).
 
 3. **The engine `calt-x`** is in neither: the user installs it with conda + pip,
-   `pip install calt-x==1.3.0` (PyPI). The bundled tasks import `calt.io.preprocess`
-   (offline pre-tokenization), which is in calt-x 1.3.0 (PR #36 + PR #38). To bump
-   the version, see §11.
+   `pip install calt-x==1.5.0` (PyPI). The bundled tasks import `calt.io.preprocess`
+   (offline pre-tokenization). The version lives in one place,
+   `src/lib/caltVersion.ts`; to bump it, see §11.
 
 ## 3. Directory map
 
@@ -178,10 +178,14 @@ npm run build
 
 ## 11. Project strategy, decisions, and OPEN loose ends (read this)
 
-- **Install = `calt-x==1.3.0` from PyPI.** `project-files/pyproject.toml`,
-  `projectReadme.ts`, and `StepReview.tsx` pin `calt-x==1.3.0`, which carries
-  `calt.io.preprocess` (PR #36 + PR #38). Bump the pin in those three places to move
-  to a newer release (see §11).
+- **Install = `calt-x==1.5.0` from PyPI.** The version is defined once, in
+  `src/lib/caltVersion.ts`; `projectReadme.ts` and `StepReview.tsx` read the
+  constant, and `applySettings` in `zip.ts` rewrites the pin inside the bundled
+  `pyproject.toml` at download time. Bump the constant, nothing else.
+  Do not pin below 1.5.0: it carries the fix that normalizes the token+position
+  sum before the transformer stack. Without it the residual stream enters the
+  stack about 35x smaller than what the layers add to it, and the model learns
+  output structure but not the values inside it.
 - **Position embedding value = `generic`, label "Learned".** The engine's
   `get_positional_embedding` historically accepted only `generic/sinusoidal/rope/none`
   ("learned" raised). The fix making "learned" an alias is now **on calt `main`**

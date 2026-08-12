@@ -56,7 +56,9 @@ conda activate calt-env
 pip install ${CALT_REQUIREMENT} matplotlib click
 \`\`\`
 
-> **Note**: \`calt-x\` 1.3.0 includes the offline pre-tokenization the tasks rely on.
+> **Note**: pin \`${CALT_REQUIREMENT}\` rather than an older release. It carries the
+> embedding normalization fix, without which the model learns the shape of the output
+> but not the values in it.
 
 Check it worked:
 
